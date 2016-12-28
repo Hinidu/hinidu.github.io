@@ -1,7 +1,7 @@
 +++
-date = "2016-12-27T20:40:25+02:00"
+date = "2016-12-28T07:58:36+02:00"
 title = "Hello, blog!"
-draft = true
+draft = false
 +++
 
 ## Brief history of failures
