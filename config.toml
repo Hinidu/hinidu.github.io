@@ -1,3 +1,4 @@
 baseurl = "https://hinidu.github.io/"
 title = "In λ We Trust"
 languageCode = "en-us"
+disqusShortname = "hinidu-github-io"
