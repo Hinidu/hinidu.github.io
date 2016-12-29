@@ -1,6 +1,7 @@
 +++
 date = "2016-12-28T07:58:36+02:00"
 title = "Hello, blog!"
+tags = ["blogging", "hugo"]
 draft = false
 +++
 
