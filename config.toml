@@ -3,3 +3,11 @@ title = "In λ We Trust"
 languageCode = "en-us"
 disqusShortname = "hinidu-github-io"
 theme = "casper"
+
+[params]
+  description = "Trying to be functional in my imperative life."
+  author = "Pavel Platto"
+  authorlocation = "Kaliningrad, Russia"
+  authorwebsite = "hinidu.github.io"
+  bio = "Software Engineer, Functional Programming and Open Source enthusiast."
+  githubName = "Hinidu"
