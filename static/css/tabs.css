@@ -1,0 +1,35 @@
+ul.tabs-menu {
+  list-style-type: none;
+  margin-bottom: -32px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e3edf3;
+  background-color: #fdf6e3;
+}
+
+ul.tabs-menu li {
+  float: left;
+  margin: 0;
+}
+
+ul.tabs-menu li a {
+  display: inline-block;
+  color: #657b83;
+  text-align: center;
+  padding: 4px 12px;
+  outline: 0;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+ul.tabs-menu li a:hover, .current {
+  background-color: #eee8d5;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content pre {
+  padding: 0;
+}

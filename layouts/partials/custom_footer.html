@@ -4,3 +4,8 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/languages/haskell.min.js"></script>
   <script>hljs.initHighlightingOnLoad();</script>
 {{ end }}
+
+{{ if .Params.tabs }}
+  <link rel="stylesheet" type="text/css" href="{{.Site.BaseURL}}css/tabs.css" />
+  <script src="{{.Site.BaseURL}}js/tabs.js"></script>
+{{ end }}
