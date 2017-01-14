@@ -2,12 +2,11 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>In λ We Trust</title>
-    <link>https://hinidu.github.io/index.xml</link>
+    <link>https://hinidu.github.io/tags/algorithms/index.xml</link>
     <description>Recent content on In λ We Trust</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 14 Jan 2017 14:37:28 +0200</lastBuildDate>
-    <atom:link href="https://hinidu.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://hinidu.github.io/tags/algorithms/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Designing Binary Search</title>
@@ -392,76 +391,6 @@ broader set of problems than just searching for element in array.&lt;/p&gt;
 
 &lt;p&gt;If you have any questions or suggestions feel free to leave a comment &amp;mdash;
 I really appreciate any feedback.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Hello, blog!</title>
-      <link>https://hinidu.github.io/post/hello-blog/</link>
-      <pubDate>Wed, 28 Dec 2016 07:58:36 +0200</pubDate>
-      
-      <guid>https://hinidu.github.io/post/hello-blog/</guid>
-      <description>
-
-&lt;h2 id=&#34;brief-history-of-failures&#34;&gt;Brief history of failures&lt;/h2&gt;
-
-&lt;p&gt;I was tempted to start my blog so many times before. But I had two kind of
-problems which was stopping me:&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;I didn&amp;rsquo;t know what&amp;rsquo;s interesting I can write.&lt;/li&gt;
-&lt;li&gt;It was hard to choose the blogging platform which meets all my needs.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&#34;why-now&#34;&gt;Why now?&lt;/h2&gt;
-
-&lt;p&gt;Let&amp;rsquo;s discuss why these problems didn&amp;rsquo;t stop me this time:&lt;/p&gt;
-
-&lt;h4 id=&#34;i-hope-i-m-not-so-boring-anyway&#34;&gt;I hope I&amp;rsquo;m not so boring anyway ;-)&lt;/h4&gt;
-
-&lt;p&gt;Recently I&amp;rsquo;ve started to think that some of the discussions with my colleagues
-or some of the stories about different open source and work projects can be
-useful and/or interesting to someone else. Also I can get some value myself
-from writing the blog thanks to your future insightful comments and more
-thorough research on posts&amp;rsquo; topics (because I need to understand something very
-well to explain it to somebody).&lt;/p&gt;
-
-&lt;h4 id=&#34;the-first-step-is-the-hardest-one&#34;&gt;The first step is the hardest one&lt;/h4&gt;
-
-&lt;p&gt;I&amp;rsquo;m a geek and I like simple text tools much more than fancy GUI apps which
-I don&amp;rsquo;t understand and/or control enough to feel myself comfortable.&lt;/p&gt;
-
-&lt;p&gt;So I was inclined to the static site generators from the first time I thought
-about blogging. There are another two reasons why I didn&amp;rsquo;t start to use one
-them before:&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;I don&amp;rsquo;t want to deal with the dependency hell of the big projects
-implemented in interpreted languages, i.e. &lt;a href=&#34;https://jekyllrb.com/&#34;&gt;Jekyll&lt;/a&gt;
-or &lt;a href=&#34;http://octopress.org/&#34;&gt;Octopress&lt;/a&gt;.&lt;/li&gt;
-&lt;li&gt;I&amp;rsquo;m not very experienced with HTML/CSS/JS so I was afraid that it will be
-too hard for me to make my blog visually appealing.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;I&amp;rsquo;m a Haskell enthusiast so my favorite option for the very long time was
-&lt;a href=&#34;https://jaspervdj.be/hakyll/&#34;&gt;Hakyll&lt;/a&gt;. But it had no themes to choose from so
-I never actually tried to write something real with it.&lt;/p&gt;
-
-&lt;p&gt;But lately I&amp;rsquo;ve heard about quite popular &lt;a href=&#34;http://gohugo.io&#34;&gt;Hugo&lt;/a&gt; site
-generator written in Go. I&amp;rsquo;ve watched &lt;a href=&#34;https://www.youtube.com/watch?v=w7Ft2ymGmfc&#34;&gt;A New Hugo Site in Under
-2 Minutes&lt;/a&gt; and I was really
-amazed! It is very straightforward to use and install (just one static binary
-with zero dependencies). And it has more than a 100
-&lt;a href=&#34;http://themes.gohugo.io/&#34;&gt;themes&lt;/a&gt; to choose from!&lt;/p&gt;
-
-&lt;h2 id=&#34;conclusion&#34;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;So if you are in a similar position to what I was before I encourage to give
-Hugo a chance!&lt;/p&gt;
-
-&lt;h4 id=&#34;p-s&#34;&gt;P.S.&lt;/h4&gt;
-
-&lt;p&gt;I hope to write some stuff soon so stay tuned and thank you for reading!&lt;/p&gt;
 </description>
     </item>
     

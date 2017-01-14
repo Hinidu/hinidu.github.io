@@ -6,8 +6,394 @@
     <description>Recent content in Post-rsses on In λ We Trust</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 28 Dec 2016 07:58:36 +0200</lastBuildDate>
+    <lastBuildDate>Sat, 14 Jan 2017 14:37:28 +0200</lastBuildDate>
     <atom:link href="https://hinidu.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Designing Binary Search</title>
+      <link>https://hinidu.github.io/post/designing-binary-search/</link>
+      <pubDate>Sat, 14 Jan 2017 14:37:28 +0200</pubDate>
+      
+      <guid>https://hinidu.github.io/post/designing-binary-search/</guid>
+      <description>
+
+&lt;p&gt;I would like to write about some useful algorithms which I have encountered in
+my day to day job. I think that the most efficient and beneficial way of
+learning algorithms is going through their design process step by step &amp;mdash; this
+way you&amp;rsquo;ll get the solid understanding of how it works and most importantly the
+skills to design algorithms yourself. I want to start from the most basic but
+still powerful algorithm &amp;mdash; &lt;em&gt;binary search&lt;/em&gt;.  At first I will describe this
+algorithm, then we will discuss it&amp;rsquo;s implementation tips and tricks, and in the
+next post I will show you some extensions and advanced usages of this algorithm
+(even the one you can use to find bugs in your programs).&lt;/p&gt;
+
+&lt;h2 id=&#34;motivation&#34;&gt;Motivation&lt;/h2&gt;
+
+&lt;h4 id=&#34;problem-statement&#34;&gt;Problem statement&lt;/h4&gt;
+
+&lt;p&gt;Let&amp;rsquo;s talk about the most common usage of &lt;em&gt;binary search&lt;/em&gt; algorithm using
+example from my current job. Our custom editor for MMORPG has many lists of
+entities: mobs, items, quests, etc. Often we need to search for some entity by
+some key (in our case it&amp;rsquo;s almost always entity ID). Most other applications
+need to solve similar tasks.&lt;/p&gt;
+
+&lt;h4 id=&#34;naive-solution&#34;&gt;Naive solution&lt;/h4&gt;
+
+&lt;p&gt;The first solution that can come to mind is to look at each element in the
+corresponding list comparing each element&amp;rsquo;s key with the needed one:&lt;/p&gt;
+
+&lt;div class=&#39;tabs-container&#39;&gt;
+  &lt;ul class=&#34;tabs-menu&#34;&gt;&lt;/ul&gt;
+  &lt;div class=&#34;tab-contents&#34;&gt;
+    &lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;C#&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;TElement LinearSearch&amp;lt;TElement, TKey&amp;gt;(
+  IEnumerable&amp;lt;TElement&amp;gt; elements, Func&amp;lt;TElement, TKey&amp;gt; getKey, TKey key)
+  where TKey : IEquatable&amp;lt;TKey&amp;gt;
+{
+  foreach (var element in elements)
+    if (getKey(element).Equals(key))
+      return element;
+  return default(TElement);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Python&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;def linear_search(elements, get_key, key):
+  for element in elements:
+    if get_key(element) == key:
+      return element
+  return None
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Haskell&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-haskell&#34;&gt;-- The simple version with explicit recursion for lists.
+linearSearch :: Eq k =&amp;gt; (a -&amp;gt; k) -&amp;gt; [a] -&amp;gt; k -&amp;gt; Maybe a
+linearSearch getKey (x:xs) k | getKey x == k = Just x
+linearSearch getKey (_:xs) k                 = linearSearch getKey xs k
+linearSearch _      []     _                 = Nothing
+
+-- The generalized version with Monoid and Alternative magic for any Foldable 
+-- data structure.
+linearSearch&#39; :: (Foldable t, Eq k) =&amp;gt; (a -&amp;gt; k) -&amp;gt; k -&amp;gt; t a -&amp;gt; Maybe a
+linearSearch&#39; getKey key =
+  getAlt . foldMap (λx -&amp;gt; Alt $ if getKey x == key then Just x else Nothing)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+  &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;p&gt;Actually it&amp;rsquo;s a viable approach &amp;mdash; it&amp;rsquo;s dead simple, it works for any
+traversable structure (arrays, linked lists, trees, graphs, etc) and it is
+quite performant when there are only small number of elements. This algorithm
+has its own name &amp;mdash; &lt;em&gt;linear search&lt;/em&gt;. As name suggests it&amp;rsquo;s execution time
+depends on the number of elements &lt;strong&gt;linearly&lt;/strong&gt; in the worst case &amp;mdash; as you add
+items to the list the execution time of this algorithm is growing
+proportionally to the number of added items. Mathematically speaking &lt;em&gt;linear
+search&lt;/em&gt; has &lt;a href=&#34;https://en.wikipedia.org/wiki/Time_complexity&#34;&gt;time complexity&lt;/a&gt;
+&lt;code&gt;O(n)&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;But we&amp;rsquo;re expecting quite big number of entities &amp;mdash; long-live MMORPG can have
+thousands or even tens of thousands of quests, NPCs and items. And we need to
+look for them in editor quite often because these entities are very
+interconnected &amp;mdash; a quest can reference many other entities in the game world.&lt;br /&gt;
+If we&amp;rsquo;ll scan the entire list to find the entity with required ID our users
+(gamedesigners, artists and scriptwriters) will be very displeased by the
+editor responsiveness and speed. Let&amp;rsquo;s think what we can do with it?&lt;/p&gt;
+
+&lt;h2 id=&#34;algorithm-design&#34;&gt;Algorithm design&lt;/h2&gt;
+
+&lt;h4 id=&#34;insight&#34;&gt;Insight&lt;/h4&gt;
+
+&lt;p&gt;It&amp;rsquo;s quite obvious that we can&amp;rsquo;t solve this problem faster if we don&amp;rsquo;t imply
+some additional restrictions on the data &amp;mdash; required element can be anywhere
+so in the worst case we should look at every element in the data structure.&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s try to remember good examples of solving &amp;ldquo;search by key&amp;rdquo; problem in the
+real world. Some time ago people have actively used dictionaries and phonebooks
+(now we successfully delegate these boring tasks to computers) and it would be
+a real nightmare to search a word or a name in them if they were not sorted.
+Maybe it&amp;rsquo;s still a good idea to sort the set to simplify the search?&lt;/p&gt;
+
+&lt;h4 id=&#34;formalization&#34;&gt;Formalization&lt;/h4&gt;
+
+&lt;p&gt;How exactly people used to optimize their search process in dictionaries and
+phonebooks? Let&amp;rsquo;s analyze their behavior:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Choose some page.&lt;/li&gt;
+&lt;li&gt;Check the content of the current page.&lt;/li&gt;
+&lt;li&gt;If the current page contains the required word then the work is done!&lt;/li&gt;
+&lt;li&gt;But if it&amp;rsquo;s not the case the person now have more useful information than it
+had before &amp;mdash; by comparing the words on the current page and required word
+we can determine whether the required word is on a page with a number less
+than the current page&amp;rsquo;s number or it is on a page with a higher number.&lt;/li&gt;
+&lt;li&gt;If the current page is the last candidate and we already know that no other
+page can contain the required word then the search is completed though
+unsuccessfully.&lt;/li&gt;
+&lt;li&gt;Perform the same steps again but considering only the part of dictionary
+which can contain the required word.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;This way a person can significantly reduce the size of search set on each
+iteration and avoid looking at each element of this set.&lt;/p&gt;
+
+&lt;p&gt;But what&amp;rsquo;s the best way to choose the next page? If we will choose the first
+remaining page at each iteration we will get exactly the &lt;em&gt;linear search&lt;/em&gt;
+algorithm discussed above. At each iteration we want to exclude as many
+elements as we can from our search set. By choosing some element for comparison
+we split the search set into two parts &amp;mdash; the left part before choosen element
+and the right one after it. But we don&amp;rsquo;t know which part will be excluded after
+comparison so we should be prepared to each outcome and we can&amp;rsquo;t make
+a preference to one of them. If we make one part significantly bigger than
+another and if we&amp;rsquo;re not lucky then this bigger part remains. To avoid this
+suboptimal situation we should make these parts&amp;rsquo; sizes as equal as possible.&lt;/p&gt;
+
+&lt;h4 id=&#34;implementation&#34;&gt;Implementation&lt;/h4&gt;
+
+&lt;p&gt;Let&amp;rsquo;s try to implement this algorithm step by step in pseudocode:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;For simplicity (without loss of generality) let&amp;rsquo;s take the array of integers
+&lt;code&gt;a&lt;/code&gt; with length &lt;code&gt;n&lt;/code&gt; (first index is &lt;code&gt;0&lt;/code&gt;).  In this array we&amp;rsquo;ll search for
+integer &lt;code&gt;k&lt;/code&gt;.  Let&amp;rsquo;s define the search range as half-open interval &lt;code&gt;(l, r]&lt;/code&gt;
+(&lt;code&gt;l&lt;/code&gt; is excluded, &lt;code&gt;r&lt;/code&gt; is included). To simplify the edge cases when &lt;code&gt;k&lt;/code&gt; is
+less or greater than every element from &lt;code&gt;a&lt;/code&gt; we add two imaginary elements:
+&lt;code&gt;a[-1] = -∞&lt;/code&gt; and &lt;code&gt;a[n] = +∞&lt;/code&gt;. They allow to use &lt;code&gt;(-1, n]&lt;/code&gt; as initial
+boundaries and fulfill the invariant that &lt;code&gt;a[l] &amp;lt; k&lt;/code&gt; and &lt;code&gt;a[r] &amp;gt;= k&lt;/code&gt;. This
+invariant will be useful in a proof of algorithm correctness.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code&gt;function binary_search(a, n, k)
+  l = -1
+  r = n
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Now let&amp;rsquo;s describe one step of searching. Take an item in the middle of the
+current search range and compare it with &lt;code&gt;k&lt;/code&gt;. There are three possible cases:
+selected element is less, equal or greater than &lt;code&gt;k&lt;/code&gt;. But we&amp;rsquo;ll combine two of
+them to simplify our code. After comparison we should update search
+boundaries accordingly.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code&gt;m = (l + r) / 2
+if a[m] &amp;gt;= k
+  r = m
+else
+  l = m
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;As you can see we maintain our invariant &lt;code&gt;a[l] &amp;lt; k&lt;/code&gt; and &lt;code&gt;a[r] &amp;gt;= k&lt;/code&gt;. So now
+we should wrap this step in a loop. But when it should stop? &lt;code&gt;l&lt;/code&gt; and &lt;code&gt;r&lt;/code&gt;
+become closer to each other and the size of search set becomes smaller after
+each step.  Actually we should find the first element that is &lt;code&gt;&amp;gt;= k&lt;/code&gt;. So we
+should stop when the search set contains no more than &lt;code&gt;1&lt;/code&gt; element (an edge
+case with &lt;code&gt;n = 0&lt;/code&gt; will work as well).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code&gt;while r - l &amp;gt; 1
+  m = (l + r) / 2
+  if a[m] &amp;gt;= k
+    r = m
+  else
+    l = m
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Thoughtful reader could note that in the loop we&amp;rsquo;re accessing &lt;code&gt;a[m]&lt;/code&gt; but
+there could be a problem if we try to access &lt;code&gt;a[-1]&lt;/code&gt; or &lt;code&gt;a[n]&lt;/code&gt; because they
+exist only in our imagination. But we never access them &amp;mdash; if &lt;code&gt;r - l &amp;gt; 1&lt;/code&gt;
+then &lt;code&gt;m != l&lt;/code&gt; and &lt;code&gt;m != r&lt;/code&gt; (there is always at least one integer number
+between the two non-consecutive integer numbers).&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;We need just one step more to finish our algorithm. We&amp;rsquo;ve got &lt;code&gt;(l, r]&lt;/code&gt; search
+boundaries where &lt;code&gt;l + 1 = r&lt;/code&gt;. Because we&amp;rsquo;ve maintained the invariant that
+&lt;code&gt;a[l] &amp;lt; k&lt;/code&gt; and &lt;code&gt;a[r] &amp;gt;= k&lt;/code&gt;. So &lt;code&gt;a[r]&lt;/code&gt; is the smallest element of &lt;code&gt;a&lt;/code&gt; that is
+&lt;code&gt;&amp;gt;= k&lt;/code&gt;. We just need to check whether it is a real element (not an imaginary
+&lt;code&gt;a[n] = +∞&lt;/code&gt;) and whether it is &lt;code&gt;= k&lt;/code&gt; or not.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code&gt;if r &amp;lt; n and a[r] = k
+  return r
+else
+  return nil
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;That&amp;rsquo;s the whole algorithm in pseudocode:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;function binary_search(a, n, k)
+  l = -1
+  r = n
+
+  while r - l &amp;gt; 1
+    m = (l + r) / 2
+    if a[m] &amp;gt;= k
+      r = m
+    else
+      l = m
+
+  if r &amp;lt; n and a[r] = k
+    return r
+  else
+    return nil
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Let&amp;rsquo;s see it&amp;rsquo;s implementations with all bells and whistles of real world
+programming languages:&lt;/p&gt;
+
+&lt;div class=&#39;tabs-container&#39;&gt;
+  &lt;ul class=&#34;tabs-menu&#34;&gt;&lt;/ul&gt;
+  &lt;div class=&#34;tab-contents&#34;&gt;
+    &lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;C#&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;TElement BinarySearch&amp;lt;TElement, TKey&amp;gt;(
+  TElement[] elements, Func&amp;lt;TElement, TKey&amp;gt; getKey, TKey key)
+  where TKey : IComparable&amp;lt;TKey&amp;gt;
+{
+  int l = -1, r = elements.Length;
+
+  while (r - l &amp;gt; 1)
+  {
+    int m = (r + l) / 2;
+    if (getKey(elements[m]).CompareTo(key) &amp;gt;= 0)
+      r = m;
+    else
+      l = m;
+  }
+
+  return r &amp;lt; elements.Length &amp;amp;&amp;amp; getKey(elements[r]).CompareTo(key) == 0
+    ? elements[r]
+    : default(TElement);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Python&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;def binary_search(elements, get_key, key):
+  l = -1
+  r = len(elements)
+  while r - l &amp;gt; 1:
+    m = (r + l) / 2
+    if get_key(elements[m]) &amp;gt;= key:
+      r = m
+    else:
+      l = m
+  if r &amp;lt; len(elements) and get_key(elements[r]) == key:
+    return elements[r]
+  else:
+    return None
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Haskell&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-haskell&#34;&gt;binarySearch :: (IArray a e, Ix i, Integral i, Ord k) =&amp;gt;
+  (a -&amp;gt; k) -&amp;gt; a i e -&amp;gt; k -&amp;gt; Maybe i
+binarySearch getKey arr key =
+  let (l, r) = bounds arr
+  in  loop (l - 1) (r + 1)
+  where
+    loop l r | r - l &amp;gt; 1 =
+      let m = (l + r) `div` 2
+      in  if getKey (arr ! m) &amp;gt;= key
+            then loop l m
+            else loop m r
+
+    loop _ r | bounds arr `inRange` r &amp;amp;&amp;amp; getKey (arr ! r) == key = Just r
+             | otherwise = Nothing
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+  &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;h2 id=&#34;algorithm-analysis&#34;&gt;Algorithm analysis&lt;/h2&gt;
+
+&lt;h4 id=&#34;correctness&#34;&gt;Correctness&lt;/h4&gt;
+
+&lt;p&gt;The most important part of correctness proof is the invariant that &lt;code&gt;a[l] &amp;lt; k&lt;/code&gt;
+and &lt;code&gt;a[r] &amp;gt;= k&lt;/code&gt;. This invariant itself is pretty obvious to prove (it is true
+before the loop, it is maintained on each iteration and it holds after the end
+of the loop). You can try to prove it yourself to practice your formal
+reasoning skills ;-) The small number of edge cases were described above as
+well.&lt;/p&gt;
+
+&lt;h4 id=&#34;performance&#34;&gt;Performance&lt;/h4&gt;
+
+&lt;p&gt;Performance of &lt;em&gt;binary search&lt;/em&gt; can be measured by the amount of item lookups
+and comparisons which the algorithm will do for an array of length &lt;code&gt;n&lt;/code&gt;. All
+other operations are primitive and doesn&amp;rsquo;t add anything to the algorithm&amp;rsquo;s
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Time_complexity&#34;&gt;time complexity&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The number of lookups can be found using this recurrence relation:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;T(0) = 0
+T(n) = 1 + T(⌈n/2⌉)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The solution for this equation is &lt;code&gt;T(n) = O(log(n))&lt;/code&gt;. We divide &lt;code&gt;n&lt;/code&gt; by &lt;code&gt;2&lt;/code&gt;
+until &lt;code&gt;n&lt;/code&gt; becomes &lt;code&gt;1&lt;/code&gt;. We should repeat division &lt;code&gt;log(n)&lt;/code&gt; times to achieve this
+goal.&lt;/p&gt;
+
+&lt;p&gt;So the time complexity of &lt;em&gt;binary search&lt;/em&gt; is
+&lt;code&gt;O((LookupTime(n) + ComparisonTime) * log(n))&lt;/code&gt;.
+In the case of integer array both &lt;code&gt;LookupTime(n)&lt;/code&gt; and &lt;code&gt;ComparisonTime&lt;/code&gt; are
+&lt;code&gt;O(1)&lt;/code&gt; (constant) so in that case time complexity will be just &lt;code&gt;O(log(n))&lt;/code&gt;
+which is significantly better than &lt;code&gt;O(n)&lt;/code&gt; of &lt;em&gt;linear search&lt;/em&gt;. You can think
+about other data structures and key types &amp;mdash; what time complexity you&amp;rsquo;ll get
+with them?&lt;/p&gt;
+
+&lt;p&gt;Of course nothing comes for free &amp;mdash; we&amp;rsquo;ve constrained ourselves to sorted
+arrays in opposite to the freedom of &lt;em&gt;linear search&lt;/em&gt;. Perhaps we&amp;rsquo;ll need to
+sort the array before executing the &lt;em&gt;binary search&lt;/em&gt; or even maintain the order
+of elements after additions, updates and deletions. So you should analyze
+performance of your program in complex &amp;mdash; if you sort an array for only
+&lt;strong&gt;one&lt;/strong&gt; execution of &lt;em&gt;binary search&lt;/em&gt; it&amp;rsquo;s just a waste of time because &lt;em&gt;sort&lt;/em&gt;
++ &lt;em&gt;binary search&lt;/em&gt; can&amp;rsquo;t be faster than &lt;em&gt;linear search&lt;/em&gt;. And if you need add,
+update or delete elements frequently then &lt;a href=&#34;https://en.wikipedia.org/wiki/Binary_search_tree&#34;&gt;&lt;em&gt;binary search
+tree&lt;/em&gt;&lt;/a&gt; or &lt;a href=&#34;https://en.wikipedia.org/wiki/Hash_table&#34;&gt;&lt;em&gt;hash
+table&lt;/em&gt;&lt;/a&gt; would be a better fit.&lt;/p&gt;
+
+&lt;h4 id=&#34;comparison-with-more-widespread-implementations&#34;&gt;Comparison with more widespread implementations&lt;/h4&gt;
+
+&lt;p&gt;Perhaps you saw different implementations of &lt;em&gt;binary search&lt;/em&gt;. This one has
+following peculiarities:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Fewer cases &amp;mdash; &lt;code&gt;a[m] &amp;lt; key&lt;/code&gt; and &lt;code&gt;a[m] &amp;gt;= key&lt;/code&gt; instead of classic &lt;code&gt;a[m] 
+&amp;lt; key&lt;/code&gt;, &lt;code&gt;a[m] &amp;gt; key&lt;/code&gt; and &lt;code&gt;a[m] = key&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Imaginary &lt;code&gt;a[-1]&lt;/code&gt; and &lt;code&gt;a[n]&lt;/code&gt; elements.&lt;/li&gt;
+&lt;li&gt;Half-open interval &lt;code&gt;(l, r]&lt;/code&gt; instead of closed interval &lt;code&gt;[l, r]&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;All of it whill simplify the generalization of algorithm in the next post.&lt;/p&gt;
+
+&lt;h2 id=&#34;to-be-continued&#34;&gt;To Be Continued&lt;/h2&gt;
+
+&lt;p&gt;Thank you for reading! I hope it was useful and interesting for you. In the
+next post I&amp;rsquo;ll describe more use cases and generalize &lt;em&gt;binary search&lt;/em&gt; to solve
+broader set of problems than just searching for element in array.&lt;/p&gt;
+
+&lt;p&gt;If you have any questions or suggestions feel free to leave a comment &amp;mdash;
+I really appreciate any feedback.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Hello, blog!</title>

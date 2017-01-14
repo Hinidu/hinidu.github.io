@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+
+
+    
+        <meta name="twitter:card" content="summary"/>
+    
+
+
+
+<meta name="twitter:title" content="Designing Binary Search"/>
+<meta name="twitter:description" content="I would like to write about some useful algorithms which I have encountered in my day to day job. I think that the most efficient and beneficial way of learning algorithms is going through their design process step by step &mdash; this way you&rsquo;ll get the solid understanding of how it works and most importantly the skills to design algorithms yourself. I want to start from the most basic but still powerful algorithm &mdash; binary search."/>
+
+
+
+  	<meta property="og:title" content=" Designing Binary Search &middot;  In λ We Trust" />
+  	<meta property="og:site_name" content="In λ We Trust" />
+  	<meta property="og:url" content="https://hinidu.github.io/post/designing-binary-search/" />
+
+    
+  	<meta property="og:type" content="article" />
+
+    <meta property="og:article:published_time" content="2017-01-14T14:37:28&#43;02:00" />
+
+    
+    <meta property="og:article:tag" content="algorithms" />
+    
+    
+
+    <title>
+       Designing Binary Search &middot;  In λ We Trust
+    </title>
+
+    <meta name="description" content="Trying to be functional in my imperative life." />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="https://hinidu.github.io/images/favicon.ico">
+	  <link rel="apple-touch-icon" href="https://hinidu.github.io/images/apple-touch-icon.png" />
+
+    <link rel="stylesheet" type="text/css" href="https://hinidu.github.io/css/screen.css" />
+    <link rel="stylesheet" type="text/css" href="https://hinidu.github.io/css/nav.css" />
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400|Inconsolata" />
+
+
+    
+      
+          <link href="https://hinidu.github.io/index.xml" rel="alternate" type="application/rss+xml" title="In λ We Trust" />
+      
+      
+    
+    <meta name="generator" content="Hugo 0.17" />
+
+    <link rel="canonical" href="https://hinidu.github.io/post/designing-binary-search/" />
+
+    
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-89615236-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+    
+
+    
+</head>
+<body class="nav-closed">
+
+  <div class="nav">
+    <h3 class="nav-title">Menu</h3>
+    <a href="#" class="nav-close">
+        <span class="hidden">Close</span>
+    </a>
+    <ul>
+        
+        
+        
+    </ul>
+    
+    
+    <a class="subscribe-button icon-feed" href="https://hinidu.github.io/index.xml">Subscribe</a>
+    
+</div>
+<span class="nav-cover"></span>
+
+
+ <div class="site-wrapper">
+
+
+
+
+<header class="main-header post-head no-cover">
+  <nav class="main-nav clearfix">
+
+
+  
+  
+      <a class="menu-button icon-feed" href="https://hinidu.github.io/index.xml">&nbsp;&nbsp;Subscribe</a>
+  
+  </nav>
+</header>
+
+
+
+<main class="content" role="main">
+
+
+
+
+  <article class="post post">
+
+    <header class="post-header">
+        <h1 class="post-title">Designing Binary Search</h1>
+        <small></small>
+
+        <section class="post-meta">
+        
+          <time class="post-date" datetime="2017-01-14T14:37:28&#43;02:00">
+            Jan 14, 2017
+          </time>
+        
+         
+          <span class="post-tag small"><a href="https://hinidu.github.io/tags/algorithms/">#algorithms</a></span>
+         
+        </section>
+    </header>
+
+    <section class="post-content">
+      
+
+<p>I would like to write about some useful algorithms which I have encountered in
+my day to day job. I think that the most efficient and beneficial way of
+learning algorithms is going through their design process step by step &mdash; this
+way you&rsquo;ll get the solid understanding of how it works and most importantly the
+skills to design algorithms yourself. I want to start from the most basic but
+still powerful algorithm &mdash; <em>binary search</em>.  At first I will describe this
+algorithm, then we will discuss it&rsquo;s implementation tips and tricks, and in the
+next post I will show you some extensions and advanced usages of this algorithm
+(even the one you can use to find bugs in your programs).</p>
+
+<h2 id="motivation">Motivation</h2>
+
+<h4 id="problem-statement">Problem statement</h4>
+
+<p>Let&rsquo;s talk about the most common usage of <em>binary search</em> algorithm using
+example from my current job. Our custom editor for MMORPG has many lists of
+entities: mobs, items, quests, etc. Often we need to search for some entity by
+some key (in our case it&rsquo;s almost always entity ID). Most other applications
+need to solve similar tasks.</p>
+
+<h4 id="naive-solution">Naive solution</h4>
+
+<p>The first solution that can come to mind is to look at each element in the
+corresponding list comparing each element&rsquo;s key with the needed one:</p>
+
+<div class='tabs-container'>
+  <ul class="tabs-menu"></ul>
+  <div class="tab-contents">
+    <p><div class="tab-content" title="C#"></p>
+
+<pre><code class="language-csharp">TElement LinearSearch&lt;TElement, TKey&gt;(
+  IEnumerable&lt;TElement&gt; elements, Func&lt;TElement, TKey&gt; getKey, TKey key)
+  where TKey : IEquatable&lt;TKey&gt;
+{
+  foreach (var element in elements)
+    if (getKey(element).Equals(key))
+      return element;
+  return default(TElement);
+}
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Python"></p>
+
+<pre><code class="language-python">def linear_search(elements, get_key, key):
+  for element in elements:
+    if get_key(element) == key:
+      return element
+  return None
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Haskell"></p>
+
+<pre><code class="language-haskell">-- The simple version with explicit recursion for lists.
+linearSearch :: Eq k =&gt; (a -&gt; k) -&gt; [a] -&gt; k -&gt; Maybe a
+linearSearch getKey (x:xs) k | getKey x == k = Just x
+linearSearch getKey (_:xs) k                 = linearSearch getKey xs k
+linearSearch _      []     _                 = Nothing
+
+-- The generalized version with Monoid and Alternative magic for any Foldable 
+-- data structure.
+linearSearch' :: (Foldable t, Eq k) =&gt; (a -&gt; k) -&gt; k -&gt; t a -&gt; Maybe a
+linearSearch' getKey key =
+  getAlt . foldMap (λx -&gt; Alt $ if getKey x == key then Just x else Nothing)
+</code></pre>
+
+<p></div></p>
+
+  </div>
+</div>
+
+
+<p>Actually it&rsquo;s a viable approach &mdash; it&rsquo;s dead simple, it works for any
+traversable structure (arrays, linked lists, trees, graphs, etc) and it is
+quite performant when there are only small number of elements. This algorithm
+has its own name &mdash; <em>linear search</em>. As name suggests it&rsquo;s execution time
+depends on the number of elements <strong>linearly</strong> in the worst case &mdash; as you add
+items to the list the execution time of this algorithm is growing
+proportionally to the number of added items. Mathematically speaking <em>linear
+search</em> has <a href="https://en.wikipedia.org/wiki/Time_complexity">time complexity</a>
+<code>O(n)</code>.</p>
+
+<p>But we&rsquo;re expecting quite big number of entities &mdash; long-live MMORPG can have
+thousands or even tens of thousands of quests, NPCs and items. And we need to
+look for them in editor quite often because these entities are very
+interconnected &mdash; a quest can reference many other entities in the game world.<br />
+If we&rsquo;ll scan the entire list to find the entity with required ID our users
+(gamedesigners, artists and scriptwriters) will be very displeased by the
+editor responsiveness and speed. Let&rsquo;s think what we can do with it?</p>
+
+<h2 id="algorithm-design">Algorithm design</h2>
+
+<h4 id="insight">Insight</h4>
+
+<p>It&rsquo;s quite obvious that we can&rsquo;t solve this problem faster if we don&rsquo;t imply
+some additional restrictions on the data &mdash; required element can be anywhere
+so in the worst case we should look at every element in the data structure.</p>
+
+<p>Let&rsquo;s try to remember good examples of solving &ldquo;search by key&rdquo; problem in the
+real world. Some time ago people have actively used dictionaries and phonebooks
+(now we successfully delegate these boring tasks to computers) and it would be
+a real nightmare to search a word or a name in them if they were not sorted.
+Maybe it&rsquo;s still a good idea to sort the set to simplify the search?</p>
+
+<h4 id="formalization">Formalization</h4>
+
+<p>How exactly people used to optimize their search process in dictionaries and
+phonebooks? Let&rsquo;s analyze their behavior:</p>
+
+<ol>
+<li>Choose some page.</li>
+<li>Check the content of the current page.</li>
+<li>If the current page contains the required word then the work is done!</li>
+<li>But if it&rsquo;s not the case the person now have more useful information than it
+had before &mdash; by comparing the words on the current page and required word
+we can determine whether the required word is on a page with a number less
+than the current page&rsquo;s number or it is on a page with a higher number.</li>
+<li>If the current page is the last candidate and we already know that no other
+page can contain the required word then the search is completed though
+unsuccessfully.</li>
+<li>Perform the same steps again but considering only the part of dictionary
+which can contain the required word.</li>
+</ol>
+
+<p>This way a person can significantly reduce the size of search set on each
+iteration and avoid looking at each element of this set.</p>
+
+<p>But what&rsquo;s the best way to choose the next page? If we will choose the first
+remaining page at each iteration we will get exactly the <em>linear search</em>
+algorithm discussed above. At each iteration we want to exclude as many
+elements as we can from our search set. By choosing some element for comparison
+we split the search set into two parts &mdash; the left part before choosen element
+and the right one after it. But we don&rsquo;t know which part will be excluded after
+comparison so we should be prepared to each outcome and we can&rsquo;t make
+a preference to one of them. If we make one part significantly bigger than
+another and if we&rsquo;re not lucky then this bigger part remains. To avoid this
+suboptimal situation we should make these parts&rsquo; sizes as equal as possible.</p>
+
+<h4 id="implementation">Implementation</h4>
+
+<p>Let&rsquo;s try to implement this algorithm step by step in pseudocode:</p>
+
+<ul>
+<li>For simplicity (without loss of generality) let&rsquo;s take the array of integers
+<code>a</code> with length <code>n</code> (first index is <code>0</code>).  In this array we&rsquo;ll search for
+integer <code>k</code>.  Let&rsquo;s define the search range as half-open interval <code>(l, r]</code>
+(<code>l</code> is excluded, <code>r</code> is included). To simplify the edge cases when <code>k</code> is
+less or greater than every element from <code>a</code> we add two imaginary elements:
+<code>a[-1] = -∞</code> and <code>a[n] = +∞</code>. They allow to use <code>(-1, n]</code> as initial
+boundaries and fulfill the invariant that <code>a[l] &lt; k</code> and <code>a[r] &gt;= k</code>. This
+invariant will be useful in a proof of algorithm correctness.</li>
+</ul>
+
+<pre><code>function binary_search(a, n, k)
+  l = -1
+  r = n
+</code></pre>
+
+<ul>
+<li>Now let&rsquo;s describe one step of searching. Take an item in the middle of the
+current search range and compare it with <code>k</code>. There are three possible cases:
+selected element is less, equal or greater than <code>k</code>. But we&rsquo;ll combine two of
+them to simplify our code. After comparison we should update search
+boundaries accordingly.</li>
+</ul>
+
+<pre><code>m = (l + r) / 2
+if a[m] &gt;= k
+  r = m
+else
+  l = m
+</code></pre>
+
+<ul>
+<li>As you can see we maintain our invariant <code>a[l] &lt; k</code> and <code>a[r] &gt;= k</code>. So now
+we should wrap this step in a loop. But when it should stop? <code>l</code> and <code>r</code>
+become closer to each other and the size of search set becomes smaller after
+each step.  Actually we should find the first element that is <code>&gt;= k</code>. So we
+should stop when the search set contains no more than <code>1</code> element (an edge
+case with <code>n = 0</code> will work as well).</li>
+</ul>
+
+<pre><code>while r - l &gt; 1
+  m = (l + r) / 2
+  if a[m] &gt;= k
+    r = m
+  else
+    l = m
+</code></pre>
+
+<ul>
+<li><p>Thoughtful reader could note that in the loop we&rsquo;re accessing <code>a[m]</code> but
+there could be a problem if we try to access <code>a[-1]</code> or <code>a[n]</code> because they
+exist only in our imagination. But we never access them &mdash; if <code>r - l &gt; 1</code>
+then <code>m != l</code> and <code>m != r</code> (there is always at least one integer number
+between the two non-consecutive integer numbers).</p></li>
+
+<li><p>We need just one step more to finish our algorithm. We&rsquo;ve got <code>(l, r]</code> search
+boundaries where <code>l + 1 = r</code>. Because we&rsquo;ve maintained the invariant that
+<code>a[l] &lt; k</code> and <code>a[r] &gt;= k</code>. So <code>a[r]</code> is the smallest element of <code>a</code> that is
+<code>&gt;= k</code>. We just need to check whether it is a real element (not an imaginary
+<code>a[n] = +∞</code>) and whether it is <code>= k</code> or not.</p></li>
+</ul>
+
+<pre><code>if r &lt; n and a[r] = k
+  return r
+else
+  return nil
+</code></pre>
+
+<p>That&rsquo;s the whole algorithm in pseudocode:</p>
+
+<pre><code>function binary_search(a, n, k)
+  l = -1
+  r = n
+
+  while r - l &gt; 1
+    m = (l + r) / 2
+    if a[m] &gt;= k
+      r = m
+    else
+      l = m
+
+  if r &lt; n and a[r] = k
+    return r
+  else
+    return nil
+</code></pre>
+
+<p>Let&rsquo;s see it&rsquo;s implementations with all bells and whistles of real world
+programming languages:</p>
+
+<div class='tabs-container'>
+  <ul class="tabs-menu"></ul>
+  <div class="tab-contents">
+    <p><div class="tab-content" title="C#"></p>
+
+<pre><code class="language-csharp">TElement BinarySearch&lt;TElement, TKey&gt;(
+  TElement[] elements, Func&lt;TElement, TKey&gt; getKey, TKey key)
+  where TKey : IComparable&lt;TKey&gt;
+{
+  int l = -1, r = elements.Length;
+
+  while (r - l &gt; 1)
+  {
+    int m = (r + l) / 2;
+    if (getKey(elements[m]).CompareTo(key) &gt;= 0)
+      r = m;
+    else
+      l = m;
+  }
+
+  return r &lt; elements.Length &amp;&amp; getKey(elements[r]).CompareTo(key) == 0
+    ? elements[r]
+    : default(TElement);
+}
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Python"></p>
+
+<pre><code class="language-python">def binary_search(elements, get_key, key):
+  l = -1
+  r = len(elements)
+  while r - l &gt; 1:
+    m = (r + l) / 2
+    if get_key(elements[m]) &gt;= key:
+      r = m
+    else:
+      l = m
+  if r &lt; len(elements) and get_key(elements[r]) == key:
+    return elements[r]
+  else:
+    return None
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Haskell"></p>
+
+<pre><code class="language-haskell">binarySearch :: (IArray a e, Ix i, Integral i, Ord k) =&gt;
+  (a -&gt; k) -&gt; a i e -&gt; k -&gt; Maybe i
+binarySearch getKey arr key =
+  let (l, r) = bounds arr
+  in  loop (l - 1) (r + 1)
+  where
+    loop l r | r - l &gt; 1 =
+      let m = (l + r) `div` 2
+      in  if getKey (arr ! m) &gt;= key
+            then loop l m
+            else loop m r
+
+    loop _ r | bounds arr `inRange` r &amp;&amp; getKey (arr ! r) == key = Just r
+             | otherwise = Nothing
+</code></pre>
+
+<p></div></p>
+
+  </div>
+</div>
+
+
+<h2 id="algorithm-analysis">Algorithm analysis</h2>
+
+<h4 id="correctness">Correctness</h4>
+
+<p>The most important part of correctness proof is the invariant that <code>a[l] &lt; k</code>
+and <code>a[r] &gt;= k</code>. This invariant itself is pretty obvious to prove (it is true
+before the loop, it is maintained on each iteration and it holds after the end
+of the loop). You can try to prove it yourself to practice your formal
+reasoning skills ;-) The small number of edge cases were described above as
+well.</p>
+
+<h4 id="performance">Performance</h4>
+
+<p>Performance of <em>binary search</em> can be measured by the amount of item lookups
+and comparisons which the algorithm will do for an array of length <code>n</code>. All
+other operations are primitive and doesn&rsquo;t add anything to the algorithm&rsquo;s
+<a href="https://en.wikipedia.org/wiki/Time_complexity">time complexity</a>.</p>
+
+<p>The number of lookups can be found using this recurrence relation:</p>
+
+<pre><code>T(0) = 0
+T(n) = 1 + T(⌈n/2⌉)
+</code></pre>
+
+<p>The solution for this equation is <code>T(n) = O(log(n))</code>. We divide <code>n</code> by <code>2</code>
+until <code>n</code> becomes <code>1</code>. We should repeat division <code>log(n)</code> times to achieve this
+goal.</p>
+
+<p>So the time complexity of <em>binary search</em> is
+<code>O((LookupTime(n) + ComparisonTime) * log(n))</code>.
+In the case of integer array both <code>LookupTime(n)</code> and <code>ComparisonTime</code> are
+<code>O(1)</code> (constant) so in that case time complexity will be just <code>O(log(n))</code>
+which is significantly better than <code>O(n)</code> of <em>linear search</em>. You can think
+about other data structures and key types &mdash; what time complexity you&rsquo;ll get
+with them?</p>
+
+<p>Of course nothing comes for free &mdash; we&rsquo;ve constrained ourselves to sorted
+arrays in opposite to the freedom of <em>linear search</em>. Perhaps we&rsquo;ll need to
+sort the array before executing the <em>binary search</em> or even maintain the order
+of elements after additions, updates and deletions. So you should analyze
+performance of your program in complex &mdash; if you sort an array for only
+<strong>one</strong> execution of <em>binary search</em> it&rsquo;s just a waste of time because <em>sort</em>
++ <em>binary search</em> can&rsquo;t be faster than <em>linear search</em>. And if you need add,
+update or delete elements frequently then <a href="https://en.wikipedia.org/wiki/Binary_search_tree"><em>binary search
+tree</em></a> or <a href="https://en.wikipedia.org/wiki/Hash_table"><em>hash
+table</em></a> would be a better fit.</p>
+
+<h4 id="comparison-with-more-widespread-implementations">Comparison with more widespread implementations</h4>
+
+<p>Perhaps you saw different implementations of <em>binary search</em>. This one has
+following peculiarities:</p>
+
+<ul>
+<li>Fewer cases &mdash; <code>a[m] &lt; key</code> and <code>a[m] &gt;= key</code> instead of classic <code>a[m] 
+&lt; key</code>, <code>a[m] &gt; key</code> and <code>a[m] = key</code>.</li>
+<li>Imaginary <code>a[-1]</code> and <code>a[n]</code> elements.</li>
+<li>Half-open interval <code>(l, r]</code> instead of closed interval <code>[l, r]</code>.</li>
+</ul>
+
+<p>All of it whill simplify the generalization of algorithm in the next post.</p>
+
+<h2 id="to-be-continued">To Be Continued</h2>
+
+<p>Thank you for reading! I hope it was useful and interesting for you. In the
+next post I&rsquo;ll describe more use cases and generalize <em>binary search</em> to solve
+broader set of problems than just searching for element in array.</p>
+
+<p>If you have any questions or suggestions feel free to leave a comment &mdash;
+I really appreciate any feedback.</p>
+
+    </section>
+
+
+  <footer class="post-footer">
+
+
+    
+
+    
+
+
+
+
+
+<section class="author">
+  <h4><a href="https://hinidu.github.io/">Pavel Platto</a></h4>
+  
+  <p>Software Engineer, Functional Programming and Open Source enthusiast.</p>
+  
+  <div class="author-meta">
+    <span class="author-location icon-location">Kaliningrad, Russia</span>
+    <span class="author-link icon-link"><a href="hinidu.github.io">hinidu.github.io</a></span>
+  </div>
+</section>
+
+
+
+    
+<section class="share">
+  <h4>Share this post</h4>
+  <a class="icon-twitter" style="font-size: 1.4em" href="https://twitter.com/share?text=Designing%20Binary%20Search&nbsp;-&nbsp;In%20%ce%bb%20We%20Trust&amp;url=https%3a%2f%2fhinidu.github.io%2fpost%2fdesigning-binary-search%2f"
+      onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+      <span class="hidden">Twitter</span>
+  </a>
+  <a class="icon-facebook" style="font-size: 1.4em" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fhinidu.github.io%2fpost%2fdesigning-binary-search%2f"
+      onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+      <span class="hidden">Facebook</span>
+  </a>
+  <a class="icon-pinterest" style="font-size: 1.4em" href="http://pinterest.com/pin/create/button/?url=https%3a%2f%2fhinidu.github.io%2fpost%2fdesigning-binary-search%2f&amp;description=Designing%20Binary%20Search"
+      onclick="window.open(this.href, 'pinterest-share','width=580,height=296');return false;">
+      <span class="hidden">Pinterest</span>
+  </a>
+  <a class="icon-google-plus" style="font-size: 1.4em" href="https://plus.google.com/share?url=https%3a%2f%2fhinidu.github.io%2fpost%2fdesigning-binary-search%2f"
+     onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+      <span class="hidden">Google+</span>
+  </a>
+</section>
+
+
+
+    
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'hinidu-github-io';
+  var disqus_url = 'https:\/\/hinidu.github.io\/post\/designing-binary-search\/';
+  (function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+  </footer>
+</article>
+
+</main>
+    <footer class="site-footer clearfix">
+        <section class="copyright"><a href="">In λ We Trust</a> </section>
+        
+        <section class="poweredby">Proudly generated by <a class="icon-hugo" href="http://gohugo.io">HUGO</a>, with <a class="icon-theme" href="https://github.com/vjeantet/hugo-theme-casper">Casper</a> theme</section>
+        
+    </footer>
+    </div>
+    <script type="text/javascript" src="https://hinidu.github.io/js/jquery.js"></script>
+    <script type="text/javascript" src="https://hinidu.github.io/js/jquery.fitvids.js"></script>
+    <script type="text/javascript" src="https://hinidu.github.io/js/index.js"></script>
+    
+        
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/solarized-light.min.css" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/languages/haskell.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <link rel="stylesheet" type="text/css" href="https://hinidu.github.io/css/tabs.css" />
+  <script src="https://hinidu.github.io/js/tabs.js"></script>
+
+
+    
+</body>
+</html>
+
