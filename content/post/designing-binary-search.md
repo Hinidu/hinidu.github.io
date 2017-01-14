@@ -1,9 +1,10 @@
 +++
-date = "2017-01-01T17:30:14+02:00"
+date = "2017-01-14T14:37:28+02:00"
 title = "Designing Binary Search"
-highlight = true
 tags = ["algorithms"]
-draft = true
+highlight = true
+tabs = true
+draft = false
 +++
 
 I would like to write about some useful algorithms which I have encountered in 
@@ -31,8 +32,10 @@ need to solve similar tasks.
 The first solution that can come to mind is to look at each element in the 
 corresponding list comparing each element's key with the needed one:
 
+{{% tabs %}}
+  {{< tab "C#" >}}
 ```csharp
-T LinearSearch<TElement, TKey>(
+TElement LinearSearch<TElement, TKey>(
   IEnumerable<TElement> elements, Func<TElement, TKey> getKey, TKey key)
   where TKey : IEquatable<TKey>
 {
@@ -42,7 +45,9 @@ T LinearSearch<TElement, TKey>(
   return default(TElement);
 }
 ```
+  {{< /tab >}}
 
+  {{< tab "Python" >}}
 ```python
 def linear_search(elements, get_key, key):
   for element in elements:
@@ -50,7 +55,9 @@ def linear_search(elements, get_key, key):
       return element
   return None
 ```
+  {{< /tab >}}
 
+  {{< tab "Haskell" >}}
 ```haskell
 -- The simple version with explicit recursion for lists.
 linearSearch :: Eq k => (a -> k) -> [a] -> k -> Maybe a
@@ -64,6 +71,8 @@ linearSearch' :: (Foldable t, Eq k) => (a -> k) -> k -> t a -> Maybe a
 linearSearch' getKey key =
   getAlt . foldMap (λx -> Alt $ if getKey x == key then Just x else Nothing)
 ```
+  {{< /tab >}}
+{{% /tabs %}}
 
 Actually it's a viable approach --- it's dead simple, it works for any 
 traversable structure (arrays, linked lists, trees, graphs, etc) and it is 
@@ -220,8 +229,10 @@ function binary_search(a, n, k)
 Let's see it's implementations with all bells and whistles of real world 
 programming languages:
 
+{{% tabs %}}
+  {{< tab "C#" >}}
 ```csharp
-T BinarySearch<TElement, TKey>(
+TElement BinarySearch<TElement, TKey>(
   TElement[] elements, Func<TElement, TKey> getKey, TKey key)
   where TKey : IComparable<TKey>
 {
@@ -241,7 +252,9 @@ T BinarySearch<TElement, TKey>(
     : default(TElement);
 }
 ```
+  {{< /tab >}}
 
+  {{< tab "Python" >}}
 ```python
 def binary_search(elements, get_key, key):
   l = -1
@@ -257,7 +270,9 @@ def binary_search(elements, get_key, key):
   else:
     return None
 ```
+  {{< /tab >}}
 
+  {{< tab "Haskell" >}}
 ```haskell
 binarySearch :: (IArray a e, Ix i, Integral i, Ord k) =>
   (a -> k) -> a i e -> k -> Maybe i
@@ -274,6 +289,8 @@ binarySearch getKey arr key =
     loop _ r | bounds arr `inRange` r && getKey (arr ! r) == key = Just r
              | otherwise = Nothing
 ```
+  {{< /tab >}}
+{{% /tabs %}}
 
 ## Algorithm analysis
 
