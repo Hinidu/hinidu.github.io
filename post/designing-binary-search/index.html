@@ -379,7 +379,7 @@ programming languages:</p>
   <div class="tab-contents">
     <p><div class="tab-content" title="C#"></p>
 
-<pre><code class="language-csharp">TElement BinarySearch&lt;TElement, TKey&gt;(
+<pre><code class="language-csharp">int? BinarySearch&lt;TElement, TKey&gt;(
   TElement[] elements, Func&lt;TElement, TKey&gt; getKey, TKey key)
   where TKey : IComparable&lt;TKey&gt;
 {
@@ -395,8 +395,8 @@ programming languages:</p>
   }
 
   return r &lt; elements.Length &amp;&amp; getKey(elements[r]).CompareTo(key) == 0
-    ? elements[r]
-    : default(TElement);
+    ? r
+    : null;
 }
 </code></pre>
 
@@ -407,14 +407,16 @@ programming languages:</p>
 <pre><code class="language-python">def binary_search(elements, get_key, key):
   l = -1
   r = len(elements)
+
   while r - l &gt; 1:
     m = (r + l) / 2
     if get_key(elements[m]) &gt;= key:
       r = m
     else:
       l = m
+
   if r &lt; len(elements) and get_key(elements[r]) == key:
-    return elements[r]
+    return r
   else:
     return None
 </code></pre>

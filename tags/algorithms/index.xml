@@ -256,7 +256,7 @@ programming languages:&lt;/p&gt;
   &lt;div class=&#34;tab-contents&#34;&gt;
     &lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;C#&#34;&gt;&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;TElement BinarySearch&amp;lt;TElement, TKey&amp;gt;(
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;int? BinarySearch&amp;lt;TElement, TKey&amp;gt;(
   TElement[] elements, Func&amp;lt;TElement, TKey&amp;gt; getKey, TKey key)
   where TKey : IComparable&amp;lt;TKey&amp;gt;
 {
@@ -272,8 +272,8 @@ programming languages:&lt;/p&gt;
   }
 
   return r &amp;lt; elements.Length &amp;amp;&amp;amp; getKey(elements[r]).CompareTo(key) == 0
-    ? elements[r]
-    : default(TElement);
+    ? r
+    : null;
 }
 &lt;/code&gt;&lt;/pre&gt;
 
@@ -284,14 +284,16 @@ programming languages:&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;def binary_search(elements, get_key, key):
   l = -1
   r = len(elements)
+
   while r - l &amp;gt; 1:
     m = (r + l) / 2
     if get_key(elements[m]) &amp;gt;= key:
       r = m
     else:
       l = m
+
   if r &amp;lt; len(elements) and get_key(elements[r]) == key:
-    return elements[r]
+    return r
   else:
     return None
 &lt;/code&gt;&lt;/pre&gt;
