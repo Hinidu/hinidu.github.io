@@ -232,7 +232,7 @@ programming languages:
 {{% tabs %}}
   {{< tab "C#" >}}
 ```csharp
-TElement BinarySearch<TElement, TKey>(
+int? BinarySearch<TElement, TKey>(
   TElement[] elements, Func<TElement, TKey> getKey, TKey key)
   where TKey : IComparable<TKey>
 {
@@ -248,8 +248,8 @@ TElement BinarySearch<TElement, TKey>(
   }
 
   return r < elements.Length && getKey(elements[r]).CompareTo(key) == 0
-    ? elements[r]
-    : default(TElement);
+    ? r
+    : null;
 }
 ```
   {{< /tab >}}
@@ -259,14 +259,16 @@ TElement BinarySearch<TElement, TKey>(
 def binary_search(elements, get_key, key):
   l = -1
   r = len(elements)
+
   while r - l > 1:
     m = (r + l) / 2
     if get_key(elements[m]) >= key:
       r = m
     else:
       l = m
+
   if r < len(elements) and get_key(elements[r]) == key:
-    return elements[r]
+    return r
   else:
     return None
 ```
