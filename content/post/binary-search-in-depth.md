@@ -64,7 +64,7 @@ linearSearch' getKey key =
   {{< /tab >}}
 {{% /tabs %}}
 
-#### The new challenge
+#### New challenge
 
 But why do we constrain ourselves by hardcoding the desired property of an 
 element (the property of having some specific key)? Nothing can stop us from 
@@ -113,7 +113,7 @@ linearSearch' predicate =
   {{< /tab >}}
 {{% /tabs %}}
 
-#### The conclusion
+#### Conclusion
 
 The code has became even simpler when we've forgot about all these cumbersome 
 keys and comparisons.
@@ -175,7 +175,245 @@ function binary_search(a, n, k)
     return nil
 ```
 
-The major difference with *linear search* here is that we've modified our 
-predicate: we check that `a[m] >= k` instead of `a[m] = k`. And we check the 
-strict equality only when we already found the first item in the sequence that 
-is greater or equal than the specified key.
+The major difference compared to *linear search* is that we've modified the 
+required predicate: we check that `a[m] >= k` instead of `a[m] = k`. And we 
+check the strict equality only when we already found the first item in the 
+sequence that is greater than or equal to the specified key.
+
+#### Mind expansion
+
+Let's forget about original predicate for a moment --- if we omit the strict 
+comparison at the end of the algorithm then `r` is the index of the **first** 
+(and the **smallest** too because the array is sorted) element in the array 
+that is `>= k` (or `r = n` if there is no such element).
+
+Now we can ask ourselves the same question as we did before with *linear 
+search*: what's special in `a[m] >= k` predicate? Can we ask other questions 
+using the same algorithm? Of hat the specified predicate should be `false` for 
+zero or more initial values of the array and it should be `true` for all values 
+after the falsy ones til the end of the array.
+
+For example we can have these sequences of predicate results for 
+"binary-searchable" array:
+
+```
+false false false true true true true
+true true
+false
+```
+
+But not these:
+
+```
+false true false true false true true
+false true false
+true true false
+```
+
+I don't want you to believe me --- if it's not obvious to you why *binary 
+search* impose this requirement on the data think about it more because the 
+understanding of this fact is very important for the proper usage of binary 
+search in practice. For example you can execute *binary search* by hand with 
+bad inputs and see why it is possible to get a wrong answer.
+
+#### Implementation
+
+This is the pseudocode with `a[m] >= k` replaced by predicate `p`. And of 
+course there are updated implementations in real world programming languages:
+
+{{% tabs %}}
+  {{< tab "Pseudo" >}}
+```
+function binary_search(p, a, n)
+  l = -1
+  r = n
+
+  while r - l > 1
+    m = (l + r) / 2
+    if p(a[m])
+      r = m
+    else
+      l = m
+
+  if r < n
+    return r
+  else
+    return nil
+```
+  {{< /tab >}}
+
+  {{< tab "C#" >}}
+```csharp
+int? BinarySearch<TElement>(TElement[] elements, Func<TElement, bool> predicate)
+{
+  int l = -1, r = elements.Length;
+
+  while (r - l > 1)
+  {
+    int m = (r + l) / 2;
+    if (predicate(elements[m]))
+      r = m;
+    else
+      l = m;
+  }
+
+  return r < elements.Length ? r : null;
+}
+```
+  {{< /tab >}}
+
+  {{< tab "Python" >}}
+```python
+def binary_search(elements, predicate):
+  l = -1
+  r = len(elements)
+
+  while r - l > 1:
+    m = (r + l) / 2
+    if predicate(elements[m]):
+      r = m
+    else:
+      l = m
+
+  if r < len(elements):
+    return r
+  else:
+    return None
+```
+  {{< /tab >}}
+
+  {{< tab "Haskell" >}}
+```haskell
+binarySearch :: (IArray a e, Ix i, Integral i) =>
+  (a -> Bool) -> a i e -> Maybe i
+binarySearch predicate arr =
+  let (l, r) = bounds arr
+  in  loop (l - 1) (r + 1)
+  where
+    loop l r | r - l > 1 =
+      let m = (l + r) `div` 2
+      in  if predicate (arr ! m)
+            then loop l m
+            else loop m r
+
+    loop _ r | bounds arr `inRange` r = Just r
+             | otherwise = Nothing
+```
+  {{< /tab >}}
+{{% /tabs %}}
+
+The code became simpler again (just like the code of *linear search* above) 
+because we forget about insignificant details of specific predicate and write 
+only the core logic of the algorithm.
+
+#### Next step?
+
+Is it really everything we can squeeze out of *binary search*? Can we make it 
+even more general? Of course yes!
+
+How we use the array in the algorithm? We just check a predicate on a handful 
+of its elements. What if we don't have an array but the function `f` to compute 
+them based on their indexes? It would be an awful waste to compute that array 
+only to run binary search on it. So we can replace hardcoded array by the 
+function that computes the elements of imaginary array by index.
+
+Also we should add the left boundary of the search space `left` to the argument 
+list because now we don't have an array that always start from 0 (though 
+Haskell arrays can have arbitrary boundaries and we already process them 
+correctly). Note that I've renamed `n` to `right` to match the style of the new 
+`left` argument. In memory of the forgotten array `a` let's assume that user 
+will provide the search range as a half-open interval `[left, right)`.
+
+{{% tabs %}}
+  {{< tab "Pseudo" >}}
+```
+function binary_search(p, f, left, right)
+  l = left - 1
+  r = right
+
+  while r - l > 1
+    m = (l + r) / 2
+    if p(f(m))
+      r = m
+    else
+      l = m
+
+  if r < right
+    return r
+  else
+    return nil
+```
+  {{< / tab >}}
+
+  {{< tab "C#" >}}
+```csharp
+int? BinarySearch<TElement>(
+  Func<TElement, bool> predicate, Func<int, TElement> f, int left, int right)
+{
+  int l = left - 1, r = right;
+
+  while (r - l > 1)
+  {
+    int m = (r + l) / 2;
+    if (predicate(f(m)))
+      r = m;
+    else
+      l = m;
+  }
+
+  return r < right ? r : null;
+}
+```
+  {{< /tab >}}
+
+  {{< tab "Python" >}}
+```python
+def binary_search(predicate, f, left, right):
+  l = left - 1
+  r = right
+
+  while r - l > 1:
+    m = (r + l) / 2
+    if predicate(f(m)):
+      r = m
+    else:
+      l = m
+
+  if r < right:
+    return r
+  else:
+    return None
+```
+  {{< /tab >}}
+
+  {{< tab "Haskell" >}}
+```haskell
+binarySearch :: Integral i => (i -> a) -> (i, i) -> (a -> Bool) -> Maybe i
+binarySearch f (left, right) predicate = loop (left - 1) right
+  where
+    loop l r | r - l > 1 =
+      let m = (l + r) `div` 2
+      in  if predicate (f m)
+            then loop l m
+            else loop m r
+
+    loop _ r | r < right = Just r
+             | otherwise = Nothing
+```
+  {{< /tab >}}
+{{% /tabs %}}
+
+#### TODO Remove?
+
+Another required change is the moving of initial `l` and `r` values to the 
+argument list. Because now we can't get the search range inside of the 
+algorithm. The most important aspect is that now the user of our *binary 
+search* should ensure himself that `p(f(l)) = false` and `p(f(r)) = true` to 
+make sure that our algorithm will work correctly.
+
+Imagine that you have a function from some integer range to something 
+
+## Advanced usages
+
+So now we are enlightened on the real essence of *binary search*. But what we 
+can do with that? Let's consider some examples.
