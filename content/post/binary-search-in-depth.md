@@ -403,15 +403,36 @@ binarySearch f (left, right) predicate = loop (left - 1) right
   {{< /tab >}}
 {{% /tabs %}}
 
-#### TODO Remove?
+#### Is it enough?
 
-Another required change is the moving of initial `l` and `r` values to the 
-argument list. Because now we can't get the search range inside of the 
-algorithm. The most important aspect is that now the user of our *binary 
-search* should ensure himself that `p(f(l)) = false` and `p(f(r)) = true` to 
-make sure that our algorithm will work correctly.
+Whew! We did a long path from *linear search* to this very generic version of 
+*binary search*. Do we still have some restrictions that we can break? 
+I encourage you to think about it a little bit yourself. Read the rest only 
+when you done it.
 
-Imagine that you have a function from some integer range to something 
+#### One last step
+
+The last thing that we'll mitigate is the type of elements in algorithm search 
+space --- there are a plenty of problems out there which can be solved using 
+*binary search* but these problems are expressed using the function with real 
+number argument instead of an integer argument from the previous section.
+
+Let's see how we should change the current implementation to work with real 
+numbers. Fortunately there is only one thing to change --- `while r - l > 1`. 
+Of course in the real numbers setting we want more accurate answer (if we don't 
+then why are we switching to real numbers in the first place?). Unfortunately 
+the way we should change it is quite tricky...
+
+One thing that can come to your mind is that if we want better accuracy then we 
+can specify how much accuracy we want exactly. For example we could decide that 
+10<sup>-6</sup> is enough for us so we'll just write `while r - l > 1e-6`. But 
+this approach can work or can not work --- it depends on your specific task. 
+Why this approach can work is pretty obvious but why it can not work? The 
+floating point number representation in computers is guilty. The problem is 
+that standard floating point types have limited precision because there are 
+only 4, 8 or 16 bytes to represent the whole universe of real numbers. So the 
+real numbers in computer are countable. It means that we are in very strange 
+situation from the mathematical point of view.
 
 ## Advanced usages
 
