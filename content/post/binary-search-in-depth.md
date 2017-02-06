@@ -478,9 +478,45 @@ The answer is hiding again in floating point representation and the fact that
 every floating point number have "neighbors" (the next number and the previous 
 one). Sooner or later `l` and `r` will become these neighbors and in that case 
 `(l + r) / 2` will be equal to `l` or `r` and it will be not possible to find 
-more accurate answer to our problem with used floating point type.
+more accurate answer for our problem with used floating point type (that's why 
+I've named this method an "absolute computational accuracy").
+
+#### Finish
+
+That's everything about generalization of *binary search* that I can think 
+about. If you have any further ideas feel free to leave them in the comments.
 
 ## Advanced usages
 
 So now we are enlightened on the real essence of *binary search*. But what we 
 can do with that? Let's consider some examples.
+
+#### Bug hunting
+
+The first example that comes to my mind is `git bisect` (by the way "bisection" 
+is a mathematical name of *binary search*). It's a tool to find a commit that 
+has introduced some bug in your system. All commits are ordered and we have 
+a predicate "whether this bug is reproducible in specified commit or not". 
+Almost always this predicate will produce `false` for some first commits and 
+beginning with the commit that has introduced that bug the predicate will 
+return `true`. So if you know some commit without this bug you can use this 
+commit as a left boundary for *binary search* and as a result you'll find the 
+first commit with that bug.
+
+`git bisect` will do all these boring staff for you --- it only asks you 
+whether current commit has that bug or not and it stops when the first commit 
+with bug was found.
+
+Of course if your SCM doesn't have this feature you can do everything yourself 
+by hand (or even write an analogue of `git bisect` for your SCM).
+
+#### Minimizing costs
+
+I think that the biggest family of examples consists of the problems where you 
+know the method how to test that some value is enough to do something (length, 
+size or amount of anything) but you want to minimize the costs hiding behind 
+this value so you want to find the minimal value that is enough. Now it should 
+be pretty obvious how to solve such tasks using *binary search*.
+
+One of the hardest part in solving can be to formulate your problem in such 
+a way that is suitable for *binary search*. Let's consider a synthetic example.
