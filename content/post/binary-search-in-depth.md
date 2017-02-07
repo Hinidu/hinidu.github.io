@@ -510,13 +510,27 @@ with bug was found.
 Of course if your SCM doesn't have this feature you can do everything yourself 
 by hand (or even write an analogue of `git bisect` for your SCM).
 
+#### Math
+
+*Binary search* can be used to calculate many math functions. The simplest 
+example is the `√x` (actually we can do the same with roots of any degree) --- 
+the predicate is `m * m >= x`, `l` is `0` and `r` is `x`.
+
 #### Minimizing costs
 
-I think that the biggest family of examples consists of the problems where you 
-know the method how to test that some value is enough to do something (length, 
-size or amount of anything) but you want to minimize the costs hiding behind 
-this value so you want to find the minimal value that is enough. Now it should 
-be pretty obvious how to solve such tasks using *binary search*.
+I think that the biggest family of useful examples consists of the problems 
+where you know the method how to test that some value is enough to do something 
+(length, size or amount of anything) but you want to minimize the costs hiding 
+behind this value so you want to find the minimal value that is enough. Now it 
+should be pretty obvious how to solve such tasks using *binary search*.
 
 One of the hardest part in solving can be to formulate your problem in such 
-a way that is suitable for *binary search*. Let's consider a synthetic example.
+a way that is suitable for *binary search*. You can find some of these problems 
+in the archives of 
+[topcoder.com](https://www.topcoder.com/tc?module=ProblemArchive&sr=&er=&sc=&sd=&class=&cat=Search&div1l=&div2l=&mind1s=&mind2s=&maxd1s=&maxd2s=&wr=) 
+and [codeforces.com](http://codeforces.com/problemset/tags/binary%20search).
+
+## Post Scriptum
+
+I hope you've enjoyed the reading of this post and learned something new. Until 
+the next time!
