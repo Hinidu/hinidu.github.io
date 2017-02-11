@@ -69,7 +69,7 @@ linearSearch' getKey key =
 But why do we constrain ourselves by hardcoding the desired property of an 
 element (the property of having some specific key)? Nothing can stop us from 
 searching for an element with any property that we want (let's call this 
-property 
+property a
 [predicate](https://en.wikipedia.org/wiki/Predicate_(mathematical_logic))):
 
 {{% tabs %}}
@@ -118,7 +118,7 @@ linearSearch' predicate =
 The code has became even simpler when we've forgot about all these cumbersome 
 keys and comparisons.
 
-That's how we can implement specific algorithm for searching by a key using the 
+That's how we can implement specific algorithm for searching by using the 
 generalized version of the algorithm:
 
 {{% tabs %}}
@@ -142,10 +142,10 @@ linearSearch (λx -> getKey x == key) xs
 {{% /tabs %}}
 
 I'm sure you can imagine many more use cases for generalized algorithm and most 
-probably you use it almost every day --- almost any language has something like 
-this in its standard library (`elements.First(predicate)` in `C#`, 
-`next(ifilter(predicate, elements), None)` in `python` and `find predicate xs` 
-in `Haskell`).
+probably you use it almost every day --- many languages have something like 
+this in its standard library: C# has `elements.First(predicate)`, Haskell has 
+`find predicate xs`, though in Python you should combine two functions to get 
+the desired functionality `next(ifilter(predicate, elements), None)`.
 
 Yeah, it was not very impressive. But I hope it will help us later with *binary 
 search*.
@@ -185,16 +185,21 @@ sequence that is greater than or equal to the specified key.
 Let's forget about original predicate for a moment --- if we omit the strict 
 comparison at the end of the algorithm then `r` is the index of the **first** 
 (and the **smallest** too because the array is sorted) element in the array 
-that is `>= k` (or `r = n` if there is no such element).
+that is **equal to or bigger than k** (or `r = n` if there is no such element). 
+By the way it can be useful sometimes to find such an element (if you want to 
+find the first deal since some date, the smallest price bigger than filter 
+specified by user, etc). Actually `lower_bound` from C++ STL does exactly this.
 
 Now we can ask ourselves the same question as we did before with *linear 
-search*: what's special in `a[m] >= k` predicate? Can we ask other questions 
-using the same algorithm? Of hat the specified predicate should be `false` for 
-zero or more initial values of the array and it should be `true` for all values 
-after the falsy ones til the end of the array.
+search*: what's special in `a[m] >= k` predicate? Can we solve other problems 
+using the same algorithm? Of course we can! `upper_bound` from C++ STL finds 
+the **first** element **bigger than k** and also implemented using *binary 
+search* with predicate `a[m] > k`.
 
-For example we can have these sequences of predicate results for 
-"binary-searchable" array:
+The only real restriction is that the specified predicate should be `false` for 
+zero or more initial values of the array and it should be `true` for all values 
+after the falsy ones til the end of the array. For example we can have these 
+sequences of predicate results for "binary-searchable" array:
 
 ```
 false false false true true true true
@@ -320,7 +325,7 @@ function that computes the elements of imaginary array by index.
 Also we should add the left boundary of the search space `left` to the argument 
 list because now we don't have an array that always start from 0 (though 
 Haskell arrays can have arbitrary boundaries and we already process them 
-correctly). Note that I've renamed `n` to `right` to match the style of the new 
+correctly). Note that I've renamed `n` to `right` to match the name of the new 
 `left` argument. In memory of the forgotten array `a` let's assume that user 
 will provide the search range as a half-open interval `[left, right)`.
 
@@ -438,11 +443,11 @@ real numbers in computer are countable. It means that we are in very strange
 situation from the mathematical point of view --- in math between any pair of 
 real numbers exists another real number but this is not the case for floating 
 point arithmetic in computers. So we can say that every floating point number 
-have the "next" one. And the difference between the number and its next number 
-can be much more than our ε --- 10<sup>-6</sup> (for example 10<sup>100</sup> 
-and it's "next" number will sure have bigger difference). I don't want to 
-describe representation of floating point numbers too deep so if you didn't 
-understand this paragraph please read about [IEEE floating 
+have the "next" one. And the difference between the number and its "next" 
+number can be much more than our ε --- 10<sup>-6</sup> (for example 
+10<sup>100</sup> and it's "next" number will sure have bigger difference). 
+I don't want to describe representation of floating point numbers too deep so 
+if you didn't understand this paragraph please read about [IEEE floating 
 point](https://en.wikipedia.org/wiki/IEEE_floating_point).
 
 The conclusion is that if we want to use the ε-approach we should take into 
@@ -454,37 +459,38 @@ get an endless loop with some inputs.
 By the way this approach would work without endless loop problem for fixed 
 point arithmetic but floating point is much more common so I don't describe it 
 in detail (though the world could be so much better place if fixed point 
-arithmetic was more widespread but this world is cruel and full of suffering).
+arithmetic was more widespread but unfortunately this world is cruel and full 
+of suffering).
 
 This approach is not ideal, let's try to find something else.
 
 ##### Limited iterations approach
 
-Maybe you already have a fix for ε-approach in your mind! How we can solve 
+Maybe you already have a fix for ε-approach in your mind? How we can solve 
 endless-loop problem in general way? Let's just limit the possible number of 
 iterations!
 
 Actually we can go even further and if we are too lazy to calculate the 
 required ε we can replace `while r - l > ε` by `for iter from 1 to iter_count`.
 
-Now the only tricky question is that how many iteration you want to perform --- 
-you should find the balance between accuracy of the answer and performance.
+Now the only tricky question is that how many iterations you want to perform 
+--- you should find the balance between accuracy of the answer and performance.
 
 This approach is quite hacky, isn't it? Can we be smarter?
 
 ##### Absolute computational accuracy
 
 The answer is hiding again in floating point representation and the fact that 
-every floating point number have "neighbors" (the next number and the previous 
-one). Sooner or later `l` and `r` will become these neighbors and in that case 
-`(l + r) / 2` will be equal to `l` or `r` and it will be not possible to find 
-more accurate answer for our problem with used floating point type (that's why 
-I've named this method an "absolute computational accuracy").
+every floating point number have "neighbors" (the "next" number and the 
+"previous" one). Sooner or later `l` and `r` will become these "neighbors" and 
+in that case `(l + r) / 2` will be equal to `l` or `r` and it will be not 
+possible to find more accurate answer for our problem with used floating point 
+type (that's why I've named this method an "absolute computational accuracy").
 
 #### Finish
 
 That's everything about generalization of *binary search* that I can think 
-about. If you have any further ideas feel free to leave them in the comments.
+about. If you have any further ideas feel free to leave them in comments.
 
 ## Advanced usages
 
@@ -496,19 +502,19 @@ can do with that? Let's consider some examples.
 The first example that comes to my mind is `git bisect` (by the way "bisection" 
 is a mathematical name of *binary search*). It's a tool to find a commit that 
 has introduced some bug in your system. All commits are ordered and we have 
-a predicate "whether this bug is reproducible in specified commit or not". 
-Almost always this predicate will produce `false` for some first commits and 
-beginning with the commit that has introduced that bug the predicate will 
-return `true`. So if you know some commit without this bug you can use this 
-commit as a left boundary for *binary search* and as a result you'll find the 
-first commit with that bug.
+a predicate "whether this bug is reproducible in current commit or not". Almost 
+always this predicate will produce `false` for some first commits and beginning 
+with the commit that has introduced that bug the predicate will return `true` 
+til the end of the history. So if you know some commit without the bug you can 
+use that commit as a left boundary for *binary search* and as a result you'll 
+find the first commit with the bug.
 
-`git bisect` will do all these boring staff for you --- it only asks you 
-whether current commit has that bug or not and it stops when the first commit 
-with bug was found.
+`git bisect` will do all boring staff for you --- it only asks you whether 
+current commit has the bug or not and it stops when the first commit with the 
+bug was found.
 
-Of course if your SCM doesn't have this feature you can do everything yourself 
-by hand (or even write an analogue of `git bisect` for your SCM).
+Of course if your SCM doesn't have this feature you can do everything by hand 
+(or even write an analogue of `git bisect` for your SCM).
 
 #### Math
 
@@ -519,10 +525,10 @@ the predicate is `m * m >= x`, `l` is `0` and `r` is `x`.
 #### Minimizing costs
 
 I think that the biggest family of useful examples consists of the problems 
-where you know the method how to test that some value is enough to do something 
-(length, size or amount of anything) but you want to minimize the costs hiding 
-behind this value so you want to find the minimal value that is enough. Now it 
-should be pretty obvious how to solve such tasks using *binary search*.
+where you know the method how to test that some value (length, size or amount 
+of anything) is enough to do something but you want to minimize the costs 
+hiding behind this value so you want to find the minimal value that is enough. 
+Now it should be pretty obvious how to solve such tasks using *binary search*.
 
 One of the hardest part in solving can be to formulate your problem in such 
 a way that is suitable for *binary search*. You can find some of these problems 
