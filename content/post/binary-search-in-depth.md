@@ -1,10 +1,10 @@
 +++
-date = "2017-01-19T21:15:38+02:00"
+date = "2017-02-11T11:41:30+02:00"
 title = "Binary Search in Depth"
 tags = ["algorithms"]
 highlight = true
 tabs = true
-draft = true
+draft = false
 +++
 
 This is the second post about *binary search* algorithm. I suggest you to read 
