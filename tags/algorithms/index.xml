@@ -9,6 +9,588 @@
     <atom:link href="https://hinidu.github.io/tags/algorithms/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>Binary Search in Depth</title>
+      <link>https://hinidu.github.io/post/binary-search-in-depth/</link>
+      <pubDate>Sat, 11 Feb 2017 11:41:30 +0200</pubDate>
+      
+      <guid>https://hinidu.github.io/post/binary-search-in-depth/</guid>
+      <description>
+
+&lt;p&gt;This is the second post about &lt;em&gt;binary search&lt;/em&gt; algorithm. I suggest you to read
+&lt;a href=&#34;https://hinidu.github.io/post/designing-binary-search/&#34;&gt;the first one&lt;/a&gt; if you didn&amp;rsquo;t do
+it yet. In this post we&amp;rsquo;ll generalize &lt;em&gt;binary search&lt;/em&gt; to be able to find more
+than just an element by its key.&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s start our generalization lesson from the simpler example &amp;mdash; &lt;em&gt;linear
+search&lt;/em&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;generalize-linear-search&#34;&gt;Generalize linear search&lt;/h2&gt;
+
+&lt;h4 id=&#34;what-we-had-before&#34;&gt;What we had before?&lt;/h4&gt;
+
+&lt;p&gt;I will put here the original version from &lt;a href=&#34;https://hinidu.github.io/post/designing-binary-search/&#34;&gt;the previous post&lt;/a&gt; for reference:&lt;/p&gt;
+
+&lt;div class=&#39;tabs-container&#39;&gt;
+  &lt;ul class=&#34;tabs-menu&#34;&gt;&lt;/ul&gt;
+  &lt;div class=&#34;tab-contents&#34;&gt;
+    &lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;C#&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;TElement LinearSearch&amp;lt;TElement, TKey&amp;gt;(
+  IEnumerable&amp;lt;TElement&amp;gt; elements, Func&amp;lt;TElement, TKey&amp;gt; getKey, TKey key)
+  where TKey : IEquatable&amp;lt;TKey&amp;gt;
+{
+  foreach (var element in elements)
+    if (getKey(element).Equals(key))
+      return element;
+  return default(TElement);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Python&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;def linear_search(elements, get_key, key):
+  for element in elements:
+    if get_key(element) == key:
+      return element
+  return None
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Haskell&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-haskell&#34;&gt;-- The simple version with explicit recursion for lists.
+linearSearch :: Eq k =&amp;gt; (a -&amp;gt; k) -&amp;gt; [a] -&amp;gt; k -&amp;gt; Maybe a
+linearSearch getKey (x:xs) k | getKey x == k = Just x
+linearSearch getKey (_:xs) k                 = linearSearch getKey xs k
+linearSearch _      []     _                 = Nothing
+
+-- The generalized version with Monoid and Alternative magic for any Foldable 
+-- data structure.
+linearSearch&#39; :: (Foldable t, Eq k) =&amp;gt; (a -&amp;gt; k) -&amp;gt; k -&amp;gt; t a -&amp;gt; Maybe a
+linearSearch&#39; getKey key =
+  getAlt . foldMap (λx -&amp;gt; Alt $ if getKey x == key then Just x else Nothing)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+  &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;h4 id=&#34;new-challenge&#34;&gt;New challenge&lt;/h4&gt;
+
+&lt;p&gt;But why do we constrain ourselves by hardcoding the desired property of an
+element (the property of having some specific key)? Nothing can stop us from
+searching for an element with any property that we want (let&amp;rsquo;s call this
+property a
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Predicate_(mathematical_logic)&#34;&gt;predicate&lt;/a&gt;):&lt;/p&gt;
+
+&lt;div class=&#39;tabs-container&#39;&gt;
+  &lt;ul class=&#34;tabs-menu&#34;&gt;&lt;/ul&gt;
+  &lt;div class=&#34;tab-contents&#34;&gt;
+    &lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;C#&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;TElement LinearSearch&amp;lt;TElement&amp;gt;(
+  IEnumerable&amp;lt;TElement&amp;gt; elements, Func&amp;lt;TElement, bool&amp;gt; predicate)
+{
+  foreach (var element in elements)
+    if (predicate(element))
+      return element;
+  return default(TElement);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Python&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;def linear_search(elements, predicate):
+  for element in elements:
+    if predicate(element):
+      return element
+  return None
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Haskell&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-haskell&#34;&gt;-- The simple version with explicit recursion for lists.
+linearSearch :: (a -&amp;gt; Bool) -&amp;gt; [a] -&amp;gt; Maybe a
+linearSearch predicate (x:_)  | predicate x = Just x
+linearSearch predicate (_:xs)               = linearSearch predicate xs
+linearSearch _         []                   = Nothing
+
+-- The generalized version with Monoid and Alternative magic for any Foldable 
+-- data structure.
+linearSearch&#39; :: Foldable t =&amp;gt; (a -&amp;gt; Bool) -&amp;gt; t a -&amp;gt; Maybe a
+linearSearch&#39; predicate =
+  getAlt . foldMap (λx -&amp;gt; Alt $ if predicate x then Just x else Nothing)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+  &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;h4 id=&#34;conclusion&#34;&gt;Conclusion&lt;/h4&gt;
+
+&lt;p&gt;The code has became even simpler when we&amp;rsquo;ve forgot about all these cumbersome
+keys and comparisons.&lt;/p&gt;
+
+&lt;p&gt;That&amp;rsquo;s how we can implement specific algorithm for searching by using the
+generalized version of the algorithm:&lt;/p&gt;
+
+&lt;div class=&#39;tabs-container&#39;&gt;
+  &lt;ul class=&#34;tabs-menu&#34;&gt;&lt;/ul&gt;
+  &lt;div class=&#34;tab-contents&#34;&gt;
+    &lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;C#&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;LinearSearch(elements, x =&amp;gt; getKey(x) == key);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Python&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;linear_search(elements, lambda x: get_key(x) == key)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Haskell&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-haskell&#34;&gt;linearSearch (λx -&amp;gt; getKey x == key) xs
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+  &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;p&gt;I&amp;rsquo;m sure you can imagine many more use cases for generalized algorithm and most
+probably you use it almost every day &amp;mdash; many languages have something like
+this in its standard library: C# has &lt;code&gt;elements.First(predicate)&lt;/code&gt;, Haskell has
+&lt;code&gt;find predicate xs&lt;/code&gt;, though in Python you should combine two functions to get
+the desired functionality &lt;code&gt;next(ifilter(predicate, elements), None)&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Yeah, it was not very impressive. But I hope it will help us later with &lt;em&gt;binary
+search&lt;/em&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;generalize-binary-search&#34;&gt;Generalize binary search&lt;/h2&gt;
+
+&lt;h4 id=&#34;what-we-had-before-1&#34;&gt;What we had before?&lt;/h4&gt;
+
+&lt;p&gt;Again I will put here the original version in pseudocode from &lt;a href=&#34;https://hinidu.github.io/post/designing-binary-search/&#34;&gt;the previous
+post&lt;/a&gt; for reference:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;function binary_search(a, n, k)
+  l = -1
+  r = n
+
+  while r - l &amp;gt; 1
+    m = (l + r) / 2
+    if a[m] &amp;gt;= k
+      r = m
+    else
+      l = m
+
+  if r &amp;lt; n and a[r] = k
+    return r
+  else
+    return nil
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The major difference compared to &lt;em&gt;linear search&lt;/em&gt; is that we&amp;rsquo;ve modified the
+required predicate: we check that &lt;code&gt;a[m] &amp;gt;= k&lt;/code&gt; instead of &lt;code&gt;a[m] = k&lt;/code&gt;. And we
+check the strict equality only when we already found the first item in the
+sequence that is greater than or equal to the specified key.&lt;/p&gt;
+
+&lt;h4 id=&#34;mind-expansion&#34;&gt;Mind expansion&lt;/h4&gt;
+
+&lt;p&gt;Let&amp;rsquo;s forget about original predicate for a moment &amp;mdash; if we omit the strict
+comparison at the end of the algorithm then &lt;code&gt;r&lt;/code&gt; is the index of the &lt;strong&gt;first&lt;/strong&gt;
+(and the &lt;strong&gt;smallest&lt;/strong&gt; too because the array is sorted) element in the array
+that is &lt;strong&gt;equal to or bigger than k&lt;/strong&gt; (or &lt;code&gt;r = n&lt;/code&gt; if there is no such element).
+By the way it can be useful sometimes to find such an element (if you want to
+find the first deal since some date, the smallest price bigger than filter
+specified by user, etc). Actually &lt;code&gt;lower_bound&lt;/code&gt; from C++ STL does exactly this.&lt;/p&gt;
+
+&lt;p&gt;Now we can ask ourselves the same question as we did before with &lt;em&gt;linear
+search&lt;/em&gt;: what&amp;rsquo;s special in &lt;code&gt;a[m] &amp;gt;= k&lt;/code&gt; predicate? Can we solve other problems
+using the same algorithm? Of course we can! &lt;code&gt;upper_bound&lt;/code&gt; from C++ STL finds
+the &lt;strong&gt;first&lt;/strong&gt; element &lt;strong&gt;bigger than k&lt;/strong&gt; and also implemented using &lt;em&gt;binary
+search&lt;/em&gt; with predicate &lt;code&gt;a[m] &amp;gt; k&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The only real restriction is that the specified predicate should be &lt;code&gt;false&lt;/code&gt; for
+zero or more initial values of the array and it should be &lt;code&gt;true&lt;/code&gt; for all values
+after the falsy ones til the end of the array. For example we can have these
+sequences of predicate results for &amp;ldquo;binary-searchable&amp;rdquo; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;false false false true true true true
+true true
+false
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;But not these:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;false true false true false true true
+false true false
+true true false
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I don&amp;rsquo;t want you to believe me &amp;mdash; if it&amp;rsquo;s not obvious to you why &lt;em&gt;binary
+search&lt;/em&gt; impose this requirement on the data think about it more because the
+understanding of this fact is very important for the proper usage of binary
+search in practice. For example you can execute &lt;em&gt;binary search&lt;/em&gt; by hand with
+bad inputs and see why it is possible to get a wrong answer.&lt;/p&gt;
+
+&lt;h4 id=&#34;implementation&#34;&gt;Implementation&lt;/h4&gt;
+
+&lt;p&gt;This is the pseudocode with &lt;code&gt;a[m] &amp;gt;= k&lt;/code&gt; replaced by predicate &lt;code&gt;p&lt;/code&gt;. And of
+course there are updated implementations in real world programming languages:&lt;/p&gt;
+
+&lt;div class=&#39;tabs-container&#39;&gt;
+  &lt;ul class=&#34;tabs-menu&#34;&gt;&lt;/ul&gt;
+  &lt;div class=&#34;tab-contents&#34;&gt;
+    &lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Pseudo&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;function binary_search(p, a, n)
+  l = -1
+  r = n
+
+  while r - l &amp;gt; 1
+    m = (l + r) / 2
+    if p(a[m])
+      r = m
+    else
+      l = m
+
+  if r &amp;lt; n
+    return r
+  else
+    return nil
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;C#&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;int? BinarySearch&amp;lt;TElement&amp;gt;(TElement[] elements, Func&amp;lt;TElement, bool&amp;gt; predicate)
+{
+  int l = -1, r = elements.Length;
+
+  while (r - l &amp;gt; 1)
+  {
+    int m = (r + l) / 2;
+    if (predicate(elements[m]))
+      r = m;
+    else
+      l = m;
+  }
+
+  return r &amp;lt; elements.Length ? r : null;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Python&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;def binary_search(elements, predicate):
+  l = -1
+  r = len(elements)
+
+  while r - l &amp;gt; 1:
+    m = (r + l) / 2
+    if predicate(elements[m]):
+      r = m
+    else:
+      l = m
+
+  if r &amp;lt; len(elements):
+    return r
+  else:
+    return None
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Haskell&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-haskell&#34;&gt;binarySearch :: (IArray a e, Ix i, Integral i) =&amp;gt;
+  (a -&amp;gt; Bool) -&amp;gt; a i e -&amp;gt; Maybe i
+binarySearch predicate arr =
+  let (l, r) = bounds arr
+  in  loop (l - 1) (r + 1)
+  where
+    loop l r | r - l &amp;gt; 1 =
+      let m = (l + r) `div` 2
+      in  if predicate (arr ! m)
+            then loop l m
+            else loop m r
+
+    loop _ r | bounds arr `inRange` r = Just r
+             | otherwise = Nothing
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+  &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;p&gt;The code became simpler again (just like the code of &lt;em&gt;linear search&lt;/em&gt; above)
+because we forget about insignificant details of specific predicate and write
+only the core logic of the algorithm.&lt;/p&gt;
+
+&lt;h4 id=&#34;next-step&#34;&gt;Next step?&lt;/h4&gt;
+
+&lt;p&gt;Is it really everything we can squeeze out of &lt;em&gt;binary search&lt;/em&gt;? Can we make it
+even more general? Of course yes!&lt;/p&gt;
+
+&lt;p&gt;How we use the array in the algorithm? We just check a predicate on a handful
+of its elements. What if we don&amp;rsquo;t have an array but the function &lt;code&gt;f&lt;/code&gt; to compute
+them based on their indexes? It would be an awful waste to compute that array
+only to run binary search on it. So we can replace hardcoded array by the
+function that computes the elements of imaginary array by index.&lt;/p&gt;
+
+&lt;p&gt;Also we should add the left boundary of the search space &lt;code&gt;left&lt;/code&gt; to the argument
+list because now we don&amp;rsquo;t have an array that always start from 0 (though
+Haskell arrays can have arbitrary boundaries and we already process them
+correctly). Note that I&amp;rsquo;ve renamed &lt;code&gt;n&lt;/code&gt; to &lt;code&gt;right&lt;/code&gt; to match the name of the new
+&lt;code&gt;left&lt;/code&gt; argument. In memory of the forgotten array &lt;code&gt;a&lt;/code&gt; let&amp;rsquo;s assume that user
+will provide the search range as a half-open interval &lt;code&gt;[left, right)&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&#39;tabs-container&#39;&gt;
+  &lt;ul class=&#34;tabs-menu&#34;&gt;&lt;/ul&gt;
+  &lt;div class=&#34;tab-contents&#34;&gt;
+    &lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Pseudo&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;function binary_search(p, f, left, right)
+  l = left - 1
+  r = right
+
+  while r - l &amp;gt; 1
+    m = (l + r) / 2
+    if p(f(m))
+      r = m
+    else
+      l = m
+
+  if r &amp;lt; right
+    return r
+  else
+    return nil
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;C#&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;int? BinarySearch&amp;lt;TElement&amp;gt;(
+  Func&amp;lt;TElement, bool&amp;gt; predicate, Func&amp;lt;int, TElement&amp;gt; f, int left, int right)
+{
+  int l = left - 1, r = right;
+
+  while (r - l &amp;gt; 1)
+  {
+    int m = (r + l) / 2;
+    if (predicate(f(m)))
+      r = m;
+    else
+      l = m;
+  }
+
+  return r &amp;lt; right ? r : null;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Python&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;def binary_search(predicate, f, left, right):
+  l = left - 1
+  r = right
+
+  while r - l &amp;gt; 1:
+    m = (r + l) / 2
+    if predicate(f(m)):
+      r = m
+    else:
+      l = m
+
+  if r &amp;lt; right:
+    return r
+  else:
+    return None
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;tab-content&#34; title=&#34;Haskell&#34;&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-haskell&#34;&gt;binarySearch :: Integral i =&amp;gt; (i -&amp;gt; a) -&amp;gt; (i, i) -&amp;gt; (a -&amp;gt; Bool) -&amp;gt; Maybe i
+binarySearch f (left, right) predicate = loop (left - 1) right
+  where
+    loop l r | r - l &amp;gt; 1 =
+      let m = (l + r) `div` 2
+      in  if predicate (f m)
+            then loop l m
+            else loop m r
+
+    loop _ r | r &amp;lt; right = Just r
+             | otherwise = Nothing
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/div&gt;&lt;/p&gt;
+
+  &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;h4 id=&#34;is-it-enough&#34;&gt;Is it enough?&lt;/h4&gt;
+
+&lt;p&gt;Whew! We did a long path from &lt;em&gt;linear search&lt;/em&gt; to this very generic version of
+&lt;em&gt;binary search&lt;/em&gt;. Do we still have some restrictions that we can break?
+I encourage you to think about it a little bit yourself. Read the rest only
+when you done it.&lt;/p&gt;
+
+&lt;h4 id=&#34;one-last-step&#34;&gt;One last step&lt;/h4&gt;
+
+&lt;p&gt;The last thing that we&amp;rsquo;ll mitigate is the type of elements in algorithm search
+space &amp;mdash; there are a plenty of problems out there which can be solved using
+&lt;em&gt;binary search&lt;/em&gt; but these problems are expressed using the function with real
+number argument instead of an integer argument from the previous section.&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s see how we should change the current implementation to work with real
+numbers. Fortunately there is only one thing to change &amp;mdash; &lt;code&gt;while r - l &amp;gt; 1&lt;/code&gt;.
+Of course in the real numbers setting we want more accurate answer (if we don&amp;rsquo;t
+then why are we switching to real numbers in the first place?). Unfortunately
+the way we should change it is quite tricky&amp;hellip;&lt;/p&gt;
+
+&lt;h5 id=&#34;ε-approach&#34;&gt;ε-approach&lt;/h5&gt;
+
+&lt;p&gt;One thing that can come to your mind is that if we want better accuracy then we
+can specify how much accuracy we want exactly. For example we could decide that
+10&lt;sup&gt;-6&lt;/sup&gt; is enough for us so we&amp;rsquo;ll just write &lt;code&gt;while r - l &amp;gt; 1e-6&lt;/code&gt;. But
+this approach can work or can not work &amp;mdash; it depends on your specific task.&lt;/p&gt;
+
+&lt;p&gt;Why this approach can work is pretty obvious but why it can not work?  The
+floating point number representation in computers is guilty.  The problem is
+that standard floating point types have limited precision because there are
+only 4, 8 or 16 bytes to represent the whole universe of real numbers. So the
+real numbers in computer are countable. It means that we are in very strange
+situation from the mathematical point of view &amp;mdash; in math between any pair of
+real numbers exists another real number but this is not the case for floating
+point arithmetic in computers. So we can say that every floating point number
+have the &amp;ldquo;next&amp;rdquo; one. And the difference between the number and its &amp;ldquo;next&amp;rdquo;
+number can be much more than our ε &amp;mdash; 10&lt;sup&gt;-6&lt;/sup&gt; (for example
+10&lt;sup&gt;100&lt;/sup&gt; and it&amp;rsquo;s &amp;ldquo;next&amp;rdquo; number will sure have bigger difference).
+I don&amp;rsquo;t want to describe representation of floating point numbers too deep so
+if you didn&amp;rsquo;t understand this paragraph please read about &lt;a href=&#34;https://en.wikipedia.org/wiki/IEEE_floating_point&#34;&gt;IEEE floating
+point&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The conclusion is that if we want to use the ε-approach we should take into
+consideration possible result values and select actual value for ε accordingly.
+So this approach is quite error-prone and I don&amp;rsquo;t recommend to use it unless
+you fully understand what you&amp;rsquo;re doing &amp;mdash; because if you made a mistake you&amp;rsquo;ll
+get an endless loop with some inputs.&lt;/p&gt;
+
+&lt;p&gt;By the way this approach would work without endless loop problem for fixed
+point arithmetic but floating point is much more common so I don&amp;rsquo;t describe it
+in detail (though the world could be so much better place if fixed point
+arithmetic was more widespread but unfortunately this world is cruel and full
+of suffering).&lt;/p&gt;
+
+&lt;p&gt;This approach is not ideal, let&amp;rsquo;s try to find something else.&lt;/p&gt;
+
+&lt;h5 id=&#34;limited-iterations-approach&#34;&gt;Limited iterations approach&lt;/h5&gt;
+
+&lt;p&gt;Maybe you already have a fix for ε-approach in your mind? How we can solve
+endless-loop problem in general way? Let&amp;rsquo;s just limit the possible number of
+iterations!&lt;/p&gt;
+
+&lt;p&gt;Actually we can go even further and if we are too lazy to calculate the
+required ε we can replace &lt;code&gt;while r - l &amp;gt; ε&lt;/code&gt; by &lt;code&gt;for iter from 1 to iter_count&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Now the only tricky question is that how many iterations you want to perform
+&amp;mdash; you should find the balance between accuracy of the answer and performance.&lt;/p&gt;
+
+&lt;p&gt;This approach is quite hacky, isn&amp;rsquo;t it? Can we be smarter?&lt;/p&gt;
+
+&lt;h5 id=&#34;absolute-computational-accuracy&#34;&gt;Absolute computational accuracy&lt;/h5&gt;
+
+&lt;p&gt;The answer is hiding again in floating point representation and the fact that
+every floating point number have &amp;ldquo;neighbors&amp;rdquo; (the &amp;ldquo;next&amp;rdquo; number and the
+&amp;ldquo;previous&amp;rdquo; one). Sooner or later &lt;code&gt;l&lt;/code&gt; and &lt;code&gt;r&lt;/code&gt; will become these &amp;ldquo;neighbors&amp;rdquo; and
+in that case &lt;code&gt;(l + r) / 2&lt;/code&gt; will be equal to &lt;code&gt;l&lt;/code&gt; or &lt;code&gt;r&lt;/code&gt; and it will be not
+possible to find more accurate answer for our problem with used floating point
+type (that&amp;rsquo;s why I&amp;rsquo;ve named this method an &amp;ldquo;absolute computational accuracy&amp;rdquo;).&lt;/p&gt;
+
+&lt;h4 id=&#34;finish&#34;&gt;Finish&lt;/h4&gt;
+
+&lt;p&gt;That&amp;rsquo;s everything about generalization of &lt;em&gt;binary search&lt;/em&gt; that I can think
+about. If you have any further ideas feel free to leave them in comments.&lt;/p&gt;
+
+&lt;h2 id=&#34;advanced-usages&#34;&gt;Advanced usages&lt;/h2&gt;
+
+&lt;p&gt;So now we are enlightened on the real essence of &lt;em&gt;binary search&lt;/em&gt;. But what we
+can do with that? Let&amp;rsquo;s consider some examples.&lt;/p&gt;
+
+&lt;h4 id=&#34;bug-hunting&#34;&gt;Bug hunting&lt;/h4&gt;
+
+&lt;p&gt;The first example that comes to my mind is &lt;code&gt;git bisect&lt;/code&gt; (by the way &amp;ldquo;bisection&amp;rdquo;
+is a mathematical name of &lt;em&gt;binary search&lt;/em&gt;). It&amp;rsquo;s a tool to find a commit that
+has introduced some bug in your system. All commits are ordered and we have
+a predicate &amp;ldquo;whether this bug is reproducible in current commit or not&amp;rdquo;. Almost
+always this predicate will produce &lt;code&gt;false&lt;/code&gt; for some first commits and beginning
+with the commit that has introduced that bug the predicate will return &lt;code&gt;true&lt;/code&gt;
+til the end of the history. So if you know some commit without the bug you can
+use that commit as a left boundary for &lt;em&gt;binary search&lt;/em&gt; and as a result you&amp;rsquo;ll
+find the first commit with the bug.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git bisect&lt;/code&gt; will do all boring staff for you &amp;mdash; it only asks you whether
+current commit has the bug or not and it stops when the first commit with the
+bug was found.&lt;/p&gt;
+
+&lt;p&gt;Of course if your SCM doesn&amp;rsquo;t have this feature you can do everything by hand
+(or even write an analogue of &lt;code&gt;git bisect&lt;/code&gt; for your SCM).&lt;/p&gt;
+
+&lt;h4 id=&#34;math&#34;&gt;Math&lt;/h4&gt;
+
+&lt;p&gt;&lt;em&gt;Binary search&lt;/em&gt; can be used to calculate many math functions. The simplest
+example is the &lt;code&gt;√x&lt;/code&gt; (actually we can do the same with roots of any degree) &amp;mdash;
+the predicate is &lt;code&gt;m * m &amp;gt;= x&lt;/code&gt;, &lt;code&gt;l&lt;/code&gt; is &lt;code&gt;0&lt;/code&gt; and &lt;code&gt;r&lt;/code&gt; is &lt;code&gt;x&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h4 id=&#34;minimizing-costs&#34;&gt;Minimizing costs&lt;/h4&gt;
+
+&lt;p&gt;I think that the biggest family of useful examples consists of the problems
+where you know the method how to test that some value (length, size or amount
+of anything) is enough to do something but you want to minimize the costs
+hiding behind this value so you want to find the minimal value that is enough.
+Now it should be pretty obvious how to solve such tasks using &lt;em&gt;binary search&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;One of the hardest part in solving can be to formulate your problem in such
+a way that is suitable for &lt;em&gt;binary search&lt;/em&gt;. You can find some of these problems
+in the archives of
+&lt;a href=&#34;https://www.topcoder.com/tc?module=ProblemArchive&amp;amp;sr=&amp;amp;er=&amp;amp;sc=&amp;amp;sd=&amp;amp;class=&amp;amp;cat=Search&amp;amp;div1l=&amp;amp;div2l=&amp;amp;mind1s=&amp;amp;mind2s=&amp;amp;maxd1s=&amp;amp;maxd2s=&amp;amp;wr=&#34;&gt;topcoder.com&lt;/a&gt;
+and &lt;a href=&#34;http://codeforces.com/problemset/tags/binary%20search&#34;&gt;codeforces.com&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;post-scriptum&#34;&gt;Post Scriptum&lt;/h2&gt;
+
+&lt;p&gt;I hope you&amp;rsquo;ve enjoyed the reading of this post and learned something new. Until
+the next time!&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Designing Binary Search</title>
       <link>https://hinidu.github.io/post/designing-binary-search/</link>
       <pubDate>Sat, 14 Jan 2017 14:37:28 +0200</pubDate>

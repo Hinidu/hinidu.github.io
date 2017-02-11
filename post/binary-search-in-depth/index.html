@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+
+
+    
+        <meta name="twitter:card" content="summary"/>
+    
+
+
+
+<meta name="twitter:title" content="Binary Search in Depth"/>
+<meta name="twitter:description" content="This is the second post about binary search algorithm. I suggest you to read the first one if you didn&rsquo;t do it yet. In this post we&rsquo;ll generalize binary search to be able to find more than just an element by its key.
+Let&rsquo;s start our generalization lesson from the simpler example &mdash; linear search.
+Generalize linear search What we had before? I will put here the original version from the previous post for reference:"/>
+
+
+
+  	<meta property="og:title" content=" Binary Search in Depth &middot;  In λ We Trust" />
+  	<meta property="og:site_name" content="In λ We Trust" />
+  	<meta property="og:url" content="https://hinidu.github.io/post/binary-search-in-depth/" />
+
+    
+  	<meta property="og:type" content="article" />
+
+    <meta property="og:article:published_time" content="2017-02-11T11:41:30&#43;02:00" />
+
+    
+    <meta property="og:article:tag" content="algorithms" />
+    
+    
+
+    <title>
+       Binary Search in Depth &middot;  In λ We Trust
+    </title>
+
+    <meta name="description" content="Trying to be functional in my imperative life." />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="https://hinidu.github.io/images/favicon.ico">
+	  <link rel="apple-touch-icon" href="https://hinidu.github.io/images/apple-touch-icon.png" />
+
+    <link rel="stylesheet" type="text/css" href="https://hinidu.github.io/css/screen.css" />
+    <link rel="stylesheet" type="text/css" href="https://hinidu.github.io/css/nav.css" />
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400|Inconsolata" />
+
+
+    
+      
+          <link href="https://hinidu.github.io/index.xml" rel="alternate" type="application/rss+xml" title="In λ We Trust" />
+      
+      
+    
+    <meta name="generator" content="Hugo 0.17" />
+
+    <link rel="canonical" href="https://hinidu.github.io/post/binary-search-in-depth/" />
+
+    
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-89615236-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+    
+
+    
+</head>
+<body class="nav-closed">
+
+  <div class="nav">
+    <h3 class="nav-title">Menu</h3>
+    <a href="#" class="nav-close">
+        <span class="hidden">Close</span>
+    </a>
+    <ul>
+        
+        
+        
+    </ul>
+    
+    
+    <a class="subscribe-button icon-feed" href="https://hinidu.github.io/index.xml">Subscribe</a>
+    
+</div>
+<span class="nav-cover"></span>
+
+
+ <div class="site-wrapper">
+
+
+
+
+<header class="main-header post-head no-cover">
+  <nav class="main-nav clearfix">
+
+
+  
+  
+      <a class="menu-button icon-feed" href="https://hinidu.github.io/index.xml">&nbsp;&nbsp;Subscribe</a>
+  
+  </nav>
+</header>
+
+
+
+<main class="content" role="main">
+
+
+
+
+  <article class="post post">
+
+    <header class="post-header">
+        <h1 class="post-title">Binary Search in Depth</h1>
+        <small></small>
+
+        <section class="post-meta">
+        
+          <time class="post-date" datetime="2017-02-11T11:41:30&#43;02:00">
+            Feb 11, 2017
+          </time>
+        
+         
+          <span class="post-tag small"><a href="https://hinidu.github.io/tags/algorithms/">#algorithms</a></span>
+         
+        </section>
+    </header>
+
+    <section class="post-content">
+      
+
+<p>This is the second post about <em>binary search</em> algorithm. I suggest you to read
+<a href="/post/designing-binary-search/">the first one</a> if you didn&rsquo;t do
+it yet. In this post we&rsquo;ll generalize <em>binary search</em> to be able to find more
+than just an element by its key.</p>
+
+<p>Let&rsquo;s start our generalization lesson from the simpler example &mdash; <em>linear
+search</em>.</p>
+
+<h2 id="generalize-linear-search">Generalize linear search</h2>
+
+<h4 id="what-we-had-before">What we had before?</h4>
+
+<p>I will put here the original version from <a href="/post/designing-binary-search/">the previous post</a> for reference:</p>
+
+<div class='tabs-container'>
+  <ul class="tabs-menu"></ul>
+  <div class="tab-contents">
+    <p><div class="tab-content" title="C#"></p>
+
+<pre><code class="language-csharp">TElement LinearSearch&lt;TElement, TKey&gt;(
+  IEnumerable&lt;TElement&gt; elements, Func&lt;TElement, TKey&gt; getKey, TKey key)
+  where TKey : IEquatable&lt;TKey&gt;
+{
+  foreach (var element in elements)
+    if (getKey(element).Equals(key))
+      return element;
+  return default(TElement);
+}
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Python"></p>
+
+<pre><code class="language-python">def linear_search(elements, get_key, key):
+  for element in elements:
+    if get_key(element) == key:
+      return element
+  return None
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Haskell"></p>
+
+<pre><code class="language-haskell">-- The simple version with explicit recursion for lists.
+linearSearch :: Eq k =&gt; (a -&gt; k) -&gt; [a] -&gt; k -&gt; Maybe a
+linearSearch getKey (x:xs) k | getKey x == k = Just x
+linearSearch getKey (_:xs) k                 = linearSearch getKey xs k
+linearSearch _      []     _                 = Nothing
+
+-- The generalized version with Monoid and Alternative magic for any Foldable 
+-- data structure.
+linearSearch' :: (Foldable t, Eq k) =&gt; (a -&gt; k) -&gt; k -&gt; t a -&gt; Maybe a
+linearSearch' getKey key =
+  getAlt . foldMap (λx -&gt; Alt $ if getKey x == key then Just x else Nothing)
+</code></pre>
+
+<p></div></p>
+
+  </div>
+</div>
+
+
+<h4 id="new-challenge">New challenge</h4>
+
+<p>But why do we constrain ourselves by hardcoding the desired property of an
+element (the property of having some specific key)? Nothing can stop us from
+searching for an element with any property that we want (let&rsquo;s call this
+property a
+<a href="https://en.wikipedia.org/wiki/Predicate_(mathematical_logic)">predicate</a>):</p>
+
+<div class='tabs-container'>
+  <ul class="tabs-menu"></ul>
+  <div class="tab-contents">
+    <p><div class="tab-content" title="C#"></p>
+
+<pre><code class="language-csharp">TElement LinearSearch&lt;TElement&gt;(
+  IEnumerable&lt;TElement&gt; elements, Func&lt;TElement, bool&gt; predicate)
+{
+  foreach (var element in elements)
+    if (predicate(element))
+      return element;
+  return default(TElement);
+}
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Python"></p>
+
+<pre><code class="language-python">def linear_search(elements, predicate):
+  for element in elements:
+    if predicate(element):
+      return element
+  return None
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Haskell"></p>
+
+<pre><code class="language-haskell">-- The simple version with explicit recursion for lists.
+linearSearch :: (a -&gt; Bool) -&gt; [a] -&gt; Maybe a
+linearSearch predicate (x:_)  | predicate x = Just x
+linearSearch predicate (_:xs)               = linearSearch predicate xs
+linearSearch _         []                   = Nothing
+
+-- The generalized version with Monoid and Alternative magic for any Foldable 
+-- data structure.
+linearSearch' :: Foldable t =&gt; (a -&gt; Bool) -&gt; t a -&gt; Maybe a
+linearSearch' predicate =
+  getAlt . foldMap (λx -&gt; Alt $ if predicate x then Just x else Nothing)
+</code></pre>
+
+<p></div></p>
+
+  </div>
+</div>
+
+
+<h4 id="conclusion">Conclusion</h4>
+
+<p>The code has became even simpler when we&rsquo;ve forgot about all these cumbersome
+keys and comparisons.</p>
+
+<p>That&rsquo;s how we can implement specific algorithm for searching by using the
+generalized version of the algorithm:</p>
+
+<div class='tabs-container'>
+  <ul class="tabs-menu"></ul>
+  <div class="tab-contents">
+    <p><div class="tab-content" title="C#"></p>
+
+<pre><code class="language-csharp">LinearSearch(elements, x =&gt; getKey(x) == key);
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Python"></p>
+
+<pre><code class="language-python">linear_search(elements, lambda x: get_key(x) == key)
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Haskell"></p>
+
+<pre><code class="language-haskell">linearSearch (λx -&gt; getKey x == key) xs
+</code></pre>
+
+<p></div></p>
+
+  </div>
+</div>
+
+
+<p>I&rsquo;m sure you can imagine many more use cases for generalized algorithm and most
+probably you use it almost every day &mdash; many languages have something like
+this in its standard library: C# has <code>elements.First(predicate)</code>, Haskell has
+<code>find predicate xs</code>, though in Python you should combine two functions to get
+the desired functionality <code>next(ifilter(predicate, elements), None)</code>.</p>
+
+<p>Yeah, it was not very impressive. But I hope it will help us later with <em>binary
+search</em>.</p>
+
+<h2 id="generalize-binary-search">Generalize binary search</h2>
+
+<h4 id="what-we-had-before-1">What we had before?</h4>
+
+<p>Again I will put here the original version in pseudocode from <a href="/post/designing-binary-search/">the previous
+post</a> for reference:</p>
+
+<pre><code>function binary_search(a, n, k)
+  l = -1
+  r = n
+
+  while r - l &gt; 1
+    m = (l + r) / 2
+    if a[m] &gt;= k
+      r = m
+    else
+      l = m
+
+  if r &lt; n and a[r] = k
+    return r
+  else
+    return nil
+</code></pre>
+
+<p>The major difference compared to <em>linear search</em> is that we&rsquo;ve modified the
+required predicate: we check that <code>a[m] &gt;= k</code> instead of <code>a[m] = k</code>. And we
+check the strict equality only when we already found the first item in the
+sequence that is greater than or equal to the specified key.</p>
+
+<h4 id="mind-expansion">Mind expansion</h4>
+
+<p>Let&rsquo;s forget about original predicate for a moment &mdash; if we omit the strict
+comparison at the end of the algorithm then <code>r</code> is the index of the <strong>first</strong>
+(and the <strong>smallest</strong> too because the array is sorted) element in the array
+that is <strong>equal to or bigger than k</strong> (or <code>r = n</code> if there is no such element).
+By the way it can be useful sometimes to find such an element (if you want to
+find the first deal since some date, the smallest price bigger than filter
+specified by user, etc). Actually <code>lower_bound</code> from C++ STL does exactly this.</p>
+
+<p>Now we can ask ourselves the same question as we did before with <em>linear
+search</em>: what&rsquo;s special in <code>a[m] &gt;= k</code> predicate? Can we solve other problems
+using the same algorithm? Of course we can! <code>upper_bound</code> from C++ STL finds
+the <strong>first</strong> element <strong>bigger than k</strong> and also implemented using <em>binary
+search</em> with predicate <code>a[m] &gt; k</code>.</p>
+
+<p>The only real restriction is that the specified predicate should be <code>false</code> for
+zero or more initial values of the array and it should be <code>true</code> for all values
+after the falsy ones til the end of the array. For example we can have these
+sequences of predicate results for &ldquo;binary-searchable&rdquo; array:</p>
+
+<pre><code>false false false true true true true
+true true
+false
+</code></pre>
+
+<p>But not these:</p>
+
+<pre><code>false true false true false true true
+false true false
+true true false
+</code></pre>
+
+<p>I don&rsquo;t want you to believe me &mdash; if it&rsquo;s not obvious to you why <em>binary
+search</em> impose this requirement on the data think about it more because the
+understanding of this fact is very important for the proper usage of binary
+search in practice. For example you can execute <em>binary search</em> by hand with
+bad inputs and see why it is possible to get a wrong answer.</p>
+
+<h4 id="implementation">Implementation</h4>
+
+<p>This is the pseudocode with <code>a[m] &gt;= k</code> replaced by predicate <code>p</code>. And of
+course there are updated implementations in real world programming languages:</p>
+
+<div class='tabs-container'>
+  <ul class="tabs-menu"></ul>
+  <div class="tab-contents">
+    <p><div class="tab-content" title="Pseudo"></p>
+
+<pre><code>function binary_search(p, a, n)
+  l = -1
+  r = n
+
+  while r - l &gt; 1
+    m = (l + r) / 2
+    if p(a[m])
+      r = m
+    else
+      l = m
+
+  if r &lt; n
+    return r
+  else
+    return nil
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="C#"></p>
+
+<pre><code class="language-csharp">int? BinarySearch&lt;TElement&gt;(TElement[] elements, Func&lt;TElement, bool&gt; predicate)
+{
+  int l = -1, r = elements.Length;
+
+  while (r - l &gt; 1)
+  {
+    int m = (r + l) / 2;
+    if (predicate(elements[m]))
+      r = m;
+    else
+      l = m;
+  }
+
+  return r &lt; elements.Length ? r : null;
+}
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Python"></p>
+
+<pre><code class="language-python">def binary_search(elements, predicate):
+  l = -1
+  r = len(elements)
+
+  while r - l &gt; 1:
+    m = (r + l) / 2
+    if predicate(elements[m]):
+      r = m
+    else:
+      l = m
+
+  if r &lt; len(elements):
+    return r
+  else:
+    return None
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Haskell"></p>
+
+<pre><code class="language-haskell">binarySearch :: (IArray a e, Ix i, Integral i) =&gt;
+  (a -&gt; Bool) -&gt; a i e -&gt; Maybe i
+binarySearch predicate arr =
+  let (l, r) = bounds arr
+  in  loop (l - 1) (r + 1)
+  where
+    loop l r | r - l &gt; 1 =
+      let m = (l + r) `div` 2
+      in  if predicate (arr ! m)
+            then loop l m
+            else loop m r
+
+    loop _ r | bounds arr `inRange` r = Just r
+             | otherwise = Nothing
+</code></pre>
+
+<p></div></p>
+
+  </div>
+</div>
+
+
+<p>The code became simpler again (just like the code of <em>linear search</em> above)
+because we forget about insignificant details of specific predicate and write
+only the core logic of the algorithm.</p>
+
+<h4 id="next-step">Next step?</h4>
+
+<p>Is it really everything we can squeeze out of <em>binary search</em>? Can we make it
+even more general? Of course yes!</p>
+
+<p>How we use the array in the algorithm? We just check a predicate on a handful
+of its elements. What if we don&rsquo;t have an array but the function <code>f</code> to compute
+them based on their indexes? It would be an awful waste to compute that array
+only to run binary search on it. So we can replace hardcoded array by the
+function that computes the elements of imaginary array by index.</p>
+
+<p>Also we should add the left boundary of the search space <code>left</code> to the argument
+list because now we don&rsquo;t have an array that always start from 0 (though
+Haskell arrays can have arbitrary boundaries and we already process them
+correctly). Note that I&rsquo;ve renamed <code>n</code> to <code>right</code> to match the name of the new
+<code>left</code> argument. In memory of the forgotten array <code>a</code> let&rsquo;s assume that user
+will provide the search range as a half-open interval <code>[left, right)</code>.</p>
+
+<div class='tabs-container'>
+  <ul class="tabs-menu"></ul>
+  <div class="tab-contents">
+    <p><div class="tab-content" title="Pseudo"></p>
+
+<pre><code>function binary_search(p, f, left, right)
+  l = left - 1
+  r = right
+
+  while r - l &gt; 1
+    m = (l + r) / 2
+    if p(f(m))
+      r = m
+    else
+      l = m
+
+  if r &lt; right
+    return r
+  else
+    return nil
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="C#"></p>
+
+<pre><code class="language-csharp">int? BinarySearch&lt;TElement&gt;(
+  Func&lt;TElement, bool&gt; predicate, Func&lt;int, TElement&gt; f, int left, int right)
+{
+  int l = left - 1, r = right;
+
+  while (r - l &gt; 1)
+  {
+    int m = (r + l) / 2;
+    if (predicate(f(m)))
+      r = m;
+    else
+      l = m;
+  }
+
+  return r &lt; right ? r : null;
+}
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Python"></p>
+
+<pre><code class="language-python">def binary_search(predicate, f, left, right):
+  l = left - 1
+  r = right
+
+  while r - l &gt; 1:
+    m = (r + l) / 2
+    if predicate(f(m)):
+      r = m
+    else:
+      l = m
+
+  if r &lt; right:
+    return r
+  else:
+    return None
+</code></pre>
+
+<p></div></p>
+
+<p><div class="tab-content" title="Haskell"></p>
+
+<pre><code class="language-haskell">binarySearch :: Integral i =&gt; (i -&gt; a) -&gt; (i, i) -&gt; (a -&gt; Bool) -&gt; Maybe i
+binarySearch f (left, right) predicate = loop (left - 1) right
+  where
+    loop l r | r - l &gt; 1 =
+      let m = (l + r) `div` 2
+      in  if predicate (f m)
+            then loop l m
+            else loop m r
+
+    loop _ r | r &lt; right = Just r
+             | otherwise = Nothing
+</code></pre>
+
+<p></div></p>
+
+  </div>
+</div>
+
+
+<h4 id="is-it-enough">Is it enough?</h4>
+
+<p>Whew! We did a long path from <em>linear search</em> to this very generic version of
+<em>binary search</em>. Do we still have some restrictions that we can break?
+I encourage you to think about it a little bit yourself. Read the rest only
+when you done it.</p>
+
+<h4 id="one-last-step">One last step</h4>
+
+<p>The last thing that we&rsquo;ll mitigate is the type of elements in algorithm search
+space &mdash; there are a plenty of problems out there which can be solved using
+<em>binary search</em> but these problems are expressed using the function with real
+number argument instead of an integer argument from the previous section.</p>
+
+<p>Let&rsquo;s see how we should change the current implementation to work with real
+numbers. Fortunately there is only one thing to change &mdash; <code>while r - l &gt; 1</code>.
+Of course in the real numbers setting we want more accurate answer (if we don&rsquo;t
+then why are we switching to real numbers in the first place?). Unfortunately
+the way we should change it is quite tricky&hellip;</p>
+
+<h5 id="ε-approach">ε-approach</h5>
+
+<p>One thing that can come to your mind is that if we want better accuracy then we
+can specify how much accuracy we want exactly. For example we could decide that
+10<sup>-6</sup> is enough for us so we&rsquo;ll just write <code>while r - l &gt; 1e-6</code>. But
+this approach can work or can not work &mdash; it depends on your specific task.</p>
+
+<p>Why this approach can work is pretty obvious but why it can not work?  The
+floating point number representation in computers is guilty.  The problem is
+that standard floating point types have limited precision because there are
+only 4, 8 or 16 bytes to represent the whole universe of real numbers. So the
+real numbers in computer are countable. It means that we are in very strange
+situation from the mathematical point of view &mdash; in math between any pair of
+real numbers exists another real number but this is not the case for floating
+point arithmetic in computers. So we can say that every floating point number
+have the &ldquo;next&rdquo; one. And the difference between the number and its &ldquo;next&rdquo;
+number can be much more than our ε &mdash; 10<sup>-6</sup> (for example
+10<sup>100</sup> and it&rsquo;s &ldquo;next&rdquo; number will sure have bigger difference).
+I don&rsquo;t want to describe representation of floating point numbers too deep so
+if you didn&rsquo;t understand this paragraph please read about <a href="https://en.wikipedia.org/wiki/IEEE_floating_point">IEEE floating
+point</a>.</p>
+
+<p>The conclusion is that if we want to use the ε-approach we should take into
+consideration possible result values and select actual value for ε accordingly.
+So this approach is quite error-prone and I don&rsquo;t recommend to use it unless
+you fully understand what you&rsquo;re doing &mdash; because if you made a mistake you&rsquo;ll
+get an endless loop with some inputs.</p>
+
+<p>By the way this approach would work without endless loop problem for fixed
+point arithmetic but floating point is much more common so I don&rsquo;t describe it
+in detail (though the world could be so much better place if fixed point
+arithmetic was more widespread but unfortunately this world is cruel and full
+of suffering).</p>
+
+<p>This approach is not ideal, let&rsquo;s try to find something else.</p>
+
+<h5 id="limited-iterations-approach">Limited iterations approach</h5>
+
+<p>Maybe you already have a fix for ε-approach in your mind? How we can solve
+endless-loop problem in general way? Let&rsquo;s just limit the possible number of
+iterations!</p>
+
+<p>Actually we can go even further and if we are too lazy to calculate the
+required ε we can replace <code>while r - l &gt; ε</code> by <code>for iter from 1 to iter_count</code>.</p>
+
+<p>Now the only tricky question is that how many iterations you want to perform
+&mdash; you should find the balance between accuracy of the answer and performance.</p>
+
+<p>This approach is quite hacky, isn&rsquo;t it? Can we be smarter?</p>
+
+<h5 id="absolute-computational-accuracy">Absolute computational accuracy</h5>
+
+<p>The answer is hiding again in floating point representation and the fact that
+every floating point number have &ldquo;neighbors&rdquo; (the &ldquo;next&rdquo; number and the
+&ldquo;previous&rdquo; one). Sooner or later <code>l</code> and <code>r</code> will become these &ldquo;neighbors&rdquo; and
+in that case <code>(l + r) / 2</code> will be equal to <code>l</code> or <code>r</code> and it will be not
+possible to find more accurate answer for our problem with used floating point
+type (that&rsquo;s why I&rsquo;ve named this method an &ldquo;absolute computational accuracy&rdquo;).</p>
+
+<h4 id="finish">Finish</h4>
+
+<p>That&rsquo;s everything about generalization of <em>binary search</em> that I can think
+about. If you have any further ideas feel free to leave them in comments.</p>
+
+<h2 id="advanced-usages">Advanced usages</h2>
+
+<p>So now we are enlightened on the real essence of <em>binary search</em>. But what we
+can do with that? Let&rsquo;s consider some examples.</p>
+
+<h4 id="bug-hunting">Bug hunting</h4>
+
+<p>The first example that comes to my mind is <code>git bisect</code> (by the way &ldquo;bisection&rdquo;
+is a mathematical name of <em>binary search</em>). It&rsquo;s a tool to find a commit that
+has introduced some bug in your system. All commits are ordered and we have
+a predicate &ldquo;whether this bug is reproducible in current commit or not&rdquo;. Almost
+always this predicate will produce <code>false</code> for some first commits and beginning
+with the commit that has introduced that bug the predicate will return <code>true</code>
+til the end of the history. So if you know some commit without the bug you can
+use that commit as a left boundary for <em>binary search</em> and as a result you&rsquo;ll
+find the first commit with the bug.</p>
+
+<p><code>git bisect</code> will do all boring staff for you &mdash; it only asks you whether
+current commit has the bug or not and it stops when the first commit with the
+bug was found.</p>
+
+<p>Of course if your SCM doesn&rsquo;t have this feature you can do everything by hand
+(or even write an analogue of <code>git bisect</code> for your SCM).</p>
+
+<h4 id="math">Math</h4>
+
+<p><em>Binary search</em> can be used to calculate many math functions. The simplest
+example is the <code>√x</code> (actually we can do the same with roots of any degree) &mdash;
+the predicate is <code>m * m &gt;= x</code>, <code>l</code> is <code>0</code> and <code>r</code> is <code>x</code>.</p>
+
+<h4 id="minimizing-costs">Minimizing costs</h4>
+
+<p>I think that the biggest family of useful examples consists of the problems
+where you know the method how to test that some value (length, size or amount
+of anything) is enough to do something but you want to minimize the costs
+hiding behind this value so you want to find the minimal value that is enough.
+Now it should be pretty obvious how to solve such tasks using <em>binary search</em>.</p>
+
+<p>One of the hardest part in solving can be to formulate your problem in such
+a way that is suitable for <em>binary search</em>. You can find some of these problems
+in the archives of
+<a href="https://www.topcoder.com/tc?module=ProblemArchive&amp;sr=&amp;er=&amp;sc=&amp;sd=&amp;class=&amp;cat=Search&amp;div1l=&amp;div2l=&amp;mind1s=&amp;mind2s=&amp;maxd1s=&amp;maxd2s=&amp;wr=">topcoder.com</a>
+and <a href="http://codeforces.com/problemset/tags/binary%20search">codeforces.com</a>.</p>
+
+<h2 id="post-scriptum">Post Scriptum</h2>
+
+<p>I hope you&rsquo;ve enjoyed the reading of this post and learned something new. Until
+the next time!</p>
+
+    </section>
+
+
+  <footer class="post-footer">
+
+
+    
+
+    
+
+
+
+
+
+<section class="author">
+  <h4><a href="https://hinidu.github.io/">Pavel Platto</a></h4>
+  
+  <p>Software Engineer, Functional Programming and Open Source enthusiast.</p>
+  
+  <div class="author-meta">
+    <span class="author-location icon-location">Kaliningrad, Russia</span>
+    <span class="author-link icon-link"><a href="hinidu.github.io">hinidu.github.io</a></span>
+  </div>
+</section>
+
+
+
+    
+<section class="share">
+  <h4>Share this post</h4>
+  <a class="icon-twitter" style="font-size: 1.4em" href="https://twitter.com/share?text=Binary%20Search%20in%20Depth&nbsp;-&nbsp;In%20%ce%bb%20We%20Trust&amp;url=https%3a%2f%2fhinidu.github.io%2fpost%2fbinary-search-in-depth%2f"
+      onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+      <span class="hidden">Twitter</span>
+  </a>
+  <a class="icon-facebook" style="font-size: 1.4em" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fhinidu.github.io%2fpost%2fbinary-search-in-depth%2f"
+      onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+      <span class="hidden">Facebook</span>
+  </a>
+  <a class="icon-pinterest" style="font-size: 1.4em" href="http://pinterest.com/pin/create/button/?url=https%3a%2f%2fhinidu.github.io%2fpost%2fbinary-search-in-depth%2f&amp;description=Binary%20Search%20in%20Depth"
+      onclick="window.open(this.href, 'pinterest-share','width=580,height=296');return false;">
+      <span class="hidden">Pinterest</span>
+  </a>
+  <a class="icon-google-plus" style="font-size: 1.4em" href="https://plus.google.com/share?url=https%3a%2f%2fhinidu.github.io%2fpost%2fbinary-search-in-depth%2f"
+     onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+      <span class="hidden">Google+</span>
+  </a>
+</section>
+
+
+
+    
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'hinidu-github-io';
+  var disqus_url = 'https:\/\/hinidu.github.io\/post\/binary-search-in-depth\/';
+  (function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+  </footer>
+</article>
+
+</main>
+    <footer class="site-footer clearfix">
+        <section class="copyright"><a href="">In λ We Trust</a> </section>
+        
+        <section class="poweredby">Proudly generated by <a class="icon-hugo" href="http://gohugo.io">HUGO</a>, with <a class="icon-theme" href="https://github.com/vjeantet/hugo-theme-casper">Casper</a> theme</section>
+        
+    </footer>
+    </div>
+    <script type="text/javascript" src="https://hinidu.github.io/js/jquery.js"></script>
+    <script type="text/javascript" src="https://hinidu.github.io/js/jquery.fitvids.js"></script>
+    <script type="text/javascript" src="https://hinidu.github.io/js/index.js"></script>
+    
+        
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/solarized-light.min.css" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/languages/haskell.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <link rel="stylesheet" type="text/css" href="https://hinidu.github.io/css/tabs.css" />
+  <script src="https://hinidu.github.io/js/tabs.js"></script>
+
+
+    
+</body>
+</html>
+
